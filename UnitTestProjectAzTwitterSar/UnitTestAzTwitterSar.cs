@@ -30,13 +30,29 @@ namespace UnitTestProjectAzTwitterSar
         }
 
         [TestMethod]
-        public void Test_ConvertUtcToLocal()
+        public void Test_ConvertUtcToLocal1()
         {
-            string res = AzTwitterSarFunc.ConvertUtcToLocal("Fri Dec 14 23:47:57 +0000 2018");
+            string res = AzTwitterSarFunc.ConvertUtcToLocal("2018-12-17T01:42:34.000Z");
 
-            Assert.AreEqual("2018-12-15T00:47:57", res);
+            Assert.AreEqual("2018-12-17 02:42:34", res);
         }
 
+        [TestMethod]
+        public void Test_ConvertUtcToLocal2()
+        {
+            string res = AzTwitterSarFunc.ConvertUtcToLocal("2018-12-16T22:27:19.000Z");
+
+            Assert.AreEqual("2018-12-16 23:27:19", res);
+        }
+
+        [TestMethod]
+        public void Test_ConvertUtcToLocal3failure()
+        {
+            // wrong input format (missing T in the middle)
+            string res = AzTwitterSarFunc.ConvertUtcToLocal("2018-12-16 22:27:19.000Z");
+
+            Assert.AreEqual("Time conversion failed: 2018-12-16 22:27:19.000Z", res);
+        }
 
         [TestMethod]
         public void Test_ScoreTweet1()

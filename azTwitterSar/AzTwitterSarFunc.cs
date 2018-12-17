@@ -182,13 +182,23 @@ namespace AzTwitterSar
         public static string ConvertUtcToLocal(string dateIn)
         {
             // Twitter's datetime format is "Fri Dec 14 23:47:57 + 0000 2018",
-            // which can be decoded by the following format string.
-            string fmt = "ddd MMM dd HH:mm:ss +ffff yyyy";
-            DateTime dtUtc = DateTime.ParseExact(dateIn, fmt,
+            // but the Azure Logic app's JSON output actually contains a 
+            // different format, namely "2018-12-14T23:47:57.000Z".
+            string dateNoMillisec = dateIn.Substring(0, 19);
+            string res = "";
+            try
+            {
+                DateTime dtUtc = DateTime.ParseExact(dateNoMillisec, "s",
                 new System.Globalization.CultureInfo("en-US"));
-            DateTime dtLoc = TimeZoneInfo.ConvertTimeFromUtc(dtUtc,
-                TimeZoneInfo.FindSystemTimeZoneById("Central Europe Standard Time"));
-            return dtLoc.ToString("s");
+                DateTime dtLoc = TimeZoneInfo.ConvertTimeFromUtc(dtUtc,
+                    TimeZoneInfo.FindSystemTimeZoneById("Central Europe Standard Time"));
+                res = dtLoc.ToString("yyyy-MM-dd HH:mm:ss");
+            }
+            catch
+            {
+                res = "Time conversion failed: " + dateIn;
+            }
+            return res;
         }
     }
 }
