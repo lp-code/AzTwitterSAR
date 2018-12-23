@@ -74,9 +74,9 @@ namespace AzTwitterSar
                 log.Info("Minimum score exceeded, send message to Slack!");
                 string CreatedAtLocalTime = ConvertUtcToLocal(CreatedAt);
                 string slackMsg = $"@channel\n{TweetText}\n"
-                    + $"Publisert: {CreatedAtLocalTime}\n"
-                    + $"Link: http://twitter.com/politivest/status/{TweetId}\n"
-                    + $"Score (v01): {score.ToString("F", CultureInfo.InvariantCulture)}";
+                    // + $"Publisert: {CreatedAtLocalTime}\n"
+                    + $"Score (v01): {score.ToString("F", CultureInfo.InvariantCulture)}\n" 
+                    + $"Link: http://twitter.com/politivest/status/{TweetId}";
 
                 log.Info($"Message: {slackMsg}");
                 sendResult = PostSlackMessage(log, slackMsg);
