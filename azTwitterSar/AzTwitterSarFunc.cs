@@ -39,6 +39,11 @@ namespace AzTwitterSar
                 "byfjell",
             };
 
+        public static string[] irrelevantStrings = new string[] {
+            "forsøk", // søk
+        };
+
+
         [FunctionName("ReceiveTweet")]
         public static async Task<HttpResponseMessage> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]HttpRequestMessage req, 
@@ -76,7 +81,7 @@ namespace AzTwitterSar
                 string CreatedAtLocalTime = ConvertUtcToLocal(CreatedAt);
                 string slackMsg = $"@channel\n{TweetText}\n"
                     // + $"Publisert: {CreatedAtLocalTime}\n"
-                    + $"Score (v01): {score.ToString("F", CultureInfo.InvariantCulture)}\n" 
+                    + $"Score (v02): {score.ToString("F", CultureInfo.InvariantCulture)}\n" 
                     + $"Link: http://twitter.com/politivest/status/{TweetId}";
 
                 log.Info($"Message: {slackMsg}");
@@ -140,9 +145,18 @@ namespace AzTwitterSar
         {
             int found = 0;
             string textLowercase = text.ToLower();
-            foreach (string word in relevantStrings)
+            foreach (string relevantWord in relevantStrings)
             {
-                if (textLowercase.Contains(word)) found++;
+                if (textLowercase.Contains(relevantWord))
+                {
+                    // When a word matches (part of) a desired word, we now
+                    // check whether it is not one of the list of to-be-
+                    // disregarded words.
+                    bool matchIrrelevant = false;
+                    foreach (string irrelevantWord in irrelevantStrings)
+                        matchIrrelevant |= textLowercase.Contains(irrelevantWord);
+                    if (!matchIrrelevant) found++;
+                }
             }
 
             return ((float)found) / Math.Min(relevantStrings.Length, 

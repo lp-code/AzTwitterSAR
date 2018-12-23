@@ -96,5 +96,18 @@ namespace UnitTestProjectAzTwitterSar
             Assert.AreEqual(expectedScore, res, 0.001f);
         }
 
+        [TestMethod]
+        public void Test_ScoreTweet4()
+        {
+            float res = AzTwitterSarFunc.ScoreTweet(
+                "#Bergen, Nordre Toppe: Ordensforstyrrelse, ruset og aggressiv"
+                + " mann, i forbindelse med innbringelsen, forsøkte han å "
+                + "skalle til en politibetjent, samt en politibetjent ble "
+                + "spyttet i øyet, mannen innsatt i Arresten, anmeldt for "
+                + "vold mot off. tjenestemann.");
+
+            Assert.AreEqual((float)0, res, 0.001f);
+        }
+
     }
 }
