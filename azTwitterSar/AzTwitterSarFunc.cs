@@ -35,7 +35,8 @@ namespace AzTwitterSar
                 "beskrivelse", "signalement",
                 "skred",
                 "røde kors", "hjelpekorps",
-                "fjell", // "byfjell",
+                //"fjell", too many false positives, 20181223 
+                "byfjell",
             };
 
         [FunctionName("ReceiveTweet")]
