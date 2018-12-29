@@ -40,7 +40,8 @@ namespace AzTwitterSar
             };
 
         public static string[] irrelevantStrings = new string[] {
-            "forsøk", // søk
+            "forsøk", "undersøk", // søk
+            "borttatt"
         };
 
 
@@ -79,7 +80,8 @@ namespace AzTwitterSar
             {
                 log.Info("Minimum score exceeded, send message to Slack!");
                 string CreatedAtLocalTime = ConvertUtcToLocal(CreatedAt);
-                string slackMsg = $"@channel\n{TweetText}\n"
+                string slackMsg = //$"@channel\n{TweetText}\n"
+                    $"{TweetText}\n"
                     // + $"Publisert: {CreatedAtLocalTime}\n"
                     + $"Score (v02): {score.ToString("F", CultureInfo.InvariantCulture)}\n" 
                     + $"Link: http://twitter.com/politivest/status/{TweetId}";
