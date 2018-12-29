@@ -30,6 +30,14 @@ namespace UnitTestProjectAzTwitterSar
         }
 
         [TestMethod]
+        public void Test_CountWordsInString3()
+        {
+            int res = AzTwitterSarFunc.CountWordsInString(
+                "Saknet person i skred, politiet undersøker. Forsøk forsøkt.");
+            Assert.AreEqual(8, res);
+        }
+
+        [TestMethod]
         public void Test_ConvertUtcToLocal1()
         {
             string res = AzTwitterSarFunc.ConvertUtcToLocal("2018-12-17T01:42:34.000Z");
@@ -60,7 +68,7 @@ namespace UnitTestProjectAzTwitterSar
             float res = AzTwitterSarFunc.ScoreTweet(
                 "#Bergen, Danmarksplass: Politiet har gjennomført farts"
                 + "kontroll. 9 forenklede forelegg, 2 førerkortbeslag, høyeste"
-                + " fart var 112 km/t i 50-sonen.");
+                + " fart var 112 km/t i 50-sonen.", out string _);
 
             Assert.AreEqual(0, res);
         }
@@ -68,17 +76,24 @@ namespace UnitTestProjectAzTwitterSar
         [TestMethod]
         public void Test_ScoreTweet2()
         {
+            //string highlightedText = "";
             float res = AzTwitterSarFunc.ScoreTweet(
                 "#Espeland Bergen: Mann i 40 årene er savnet fra bopel det er"
                 + " iverksatt leteaksjon. Mannskap fra Røde Kors Norske "
                 + "Redningshunder samt Norsk Luftambulanse deltar foreløpig i"
-                + " søket.");
+                + " søket.", out string highlightedText);
 
             // The tweet has 27 words, but here the minimum in the denominator
             // in the score function selects the number of trigger words.
-            float expectedScore = (float)6 /
+            float expectedScore = (float)7 /
                 AzTwitterSarFunc.relevantStrings.Length;
             Assert.AreEqual(expectedScore, res, 0.001f);
+
+            Assert.AreEqual(
+                "#Espeland Bergen: Mann i 40 årene er *savnet* fra bopel det er"
+                + " iverksatt *leteaksjon.* Mannskap fra *Røde* *Kors* Norske "
+                + "*Redningshunder* samt Norsk *Luftambulanse* deltar foreløpig i"
+                + " *søket.*", highlightedText);
         }
 
         [TestMethod]
@@ -89,25 +104,52 @@ namespace UnitTestProjectAzTwitterSar
                 + " kl 04 i natt etter melding om beruset person som framsto "
                 + "ute av stand til å ivareta seg selv. Lokalt politi fått "
                 + "bistand fra Røde Kors og Norske redningshunder. Vedkommende"
-                + "funnet ca kl 0930 i god behold.");
+                + "funnet ca kl 0930 i god behold.", out string highlightedText);
 
-            float expectedScore = (float)3 /
+            float expectedScore = (float)4 /
                 AzTwitterSarFunc.relevantStrings.Length;
             Assert.AreEqual(expectedScore, res, 0.001f);
+
+            Assert.AreEqual(
+                "#Kaupanger Politiet har *leitet* etter en mann i 30-årene siden"
+                + " kl 04 i natt etter melding om beruset person som framsto "
+                + "ute av stand til å ivareta seg selv. Lokalt politi fått "
+                + "bistand fra *Røde* *Kors* og Norske *redningshunder.* Vedkommende"
+                + "funnet ca kl 0930 i god behold.", highlightedText);
         }
 
         [TestMethod]
         public void Test_ScoreTweet4()
         {
-            float res = AzTwitterSarFunc.ScoreTweet(
+            string originalText =
                 "#Bergen, Nordre Toppe: Ordensforstyrrelse, ruset og aggressiv"
                 + " mann, i forbindelse med innbringelsen, forsøkte han å "
                 + "skalle til en politibetjent, samt en politibetjent ble "
                 + "spyttet i øyet, mannen innsatt i Arresten, anmeldt for "
-                + "vold mot off. tjenestemann.");
+                + "vold mot off. tjenestemann.";
+            float res = AzTwitterSarFunc.ScoreTweet(originalText, 
+                out string highlightedText);
 
             Assert.AreEqual((float)0, res, 0.001f);
+
+            Assert.AreEqual(originalText, highlightedText);
         }
+
+        [TestMethod]
+        public void Test_ScoreTweet5()
+        {
+            float res = AzTwitterSarFunc.ScoreTweet(
+                "Saknet person i skred, politiet undersøker. Forsøk forsøkt.",
+                out string highlightedText);
+
+            float expectedScore = (float)2 / 8; // only eight words in text
+            Assert.AreEqual(expectedScore, res, 0.001f);
+
+            Assert.AreEqual(
+                "*Saknet* person i *skred,* politiet undersøker. Forsøk forsøkt.",
+                highlightedText);
+        }
+
 
     }
 }

@@ -34,7 +34,7 @@ namespace AzTwitterSar
                 "dement",
                 "beskrivelse", "signalement",
                 "skred",
-                "røde kors", "hjelpekorps",
+                "røde",  "kors", "hjelpekorps",
                 //"fjell", too many false positives, 20181223 
                 "byfjell",
             };
@@ -74,16 +74,16 @@ namespace AzTwitterSar
             }
             log.Info($"Using minimum score {minimumScore}.");
             
-            float score = ScoreTweet(TweetText);
+            float score = ScoreTweet(TweetText, out string highlightedText);
             int sendResult = 0;
             if (score > minimumScore)
             {
                 log.Info("Minimum score exceeded, send message to Slack!");
                 string CreatedAtLocalTime = ConvertUtcToLocal(CreatedAt);
                 string slackMsg = //$"@channel\n{TweetText}\n"
-                    $"{TweetText}\n"
+                    $"{highlightedText}\n"
                     // + $"Publisert: {CreatedAtLocalTime}\n"
-                    + $"Score (v02): {score.ToString("F", CultureInfo.InvariantCulture)}\n" 
+                    + $"Score (v03): {score.ToString("F", CultureInfo.InvariantCulture)}\n" 
                     + $"Link: http://twitter.com/politivest/status/{TweetId}";
 
                 log.Info($"Message: {slackMsg}");
@@ -139,28 +139,49 @@ namespace AzTwitterSar
         }
 
         /// <summary>
-        /// Return a score value in the interval [0;1] for the given text.
+        /// Return a score value in the interval [0;1] for the given text, and
+        /// the input string with trigger words in Slack-highlighting.
         /// </summary>
         /// <param name="text">String to be scored.</param>
+        /// <param name="highlightedText">Copy of the input with scored words
+        ///                               highlighted.</param>
         /// <returns>Score value</returns>
-        public static float ScoreTweet(string text)
+        public static float ScoreTweet(string text, out string highlightedText)
         {
-            int found = 0;
-            string textLowercase = text.ToLower();
-            foreach (string relevantWord in relevantStrings)
-            {
-                if (textLowercase.Contains(relevantWord))
-                {
-                    // When a word matches (part of) a desired word, we now
-                    // check whether it is not one of the list of to-be-
-                    // disregarded words.
-                    bool matchIrrelevant = false;
-                    foreach (string irrelevantWord in irrelevantStrings)
-                        matchIrrelevant |= textLowercase.Contains(irrelevantWord);
-                    if (!matchIrrelevant) found++;
-                }
-            }
+            string[] words = text.Split(null);
+            highlightedText = "";
 
+            int found = 0;
+            foreach (string word in words)
+            {
+                string wordLower = word.ToLower();
+                bool highlight = false;
+                foreach (string relevantWord in relevantStrings)
+                {
+                    if (wordLower.Contains(relevantWord))
+                    {
+                        // When a word contains a desired word, we now
+                        // check whether it is not one of the list of to-be-
+                        // disregarded words.
+                        bool matchIrrelevant = false;
+                        foreach (string irrelevantWord in irrelevantStrings)
+                            matchIrrelevant |= wordLower.Contains(irrelevantWord);
+                        if (!matchIrrelevant)
+                        {
+                            highlight = true;
+                            break;
+                        }
+                    }
+                }
+                if (highlight)
+                {
+                    found++;
+                    highlightedText += " *" + word + "*";
+                }
+                else
+                    highlightedText += " " + word;
+            }
+            highlightedText = highlightedText.Trim();
             return ((float)found) / Math.Min(relevantStrings.Length, 
                                              CountWordsInString(text));
         }
