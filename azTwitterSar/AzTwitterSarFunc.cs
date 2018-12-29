@@ -62,28 +62,21 @@ namespace AzTwitterSar
                 return req.CreateResponse(HttpStatusCode.BadRequest,
                     "Please pass all required parameters in the request body!");
 
-            float minimumScore = 0;
-            try
-            {
-                string min_score_string = Environment.GetEnvironmentVariable("AZTWITTERSAR_MINSCORE");
-                minimumScore = float.Parse(min_score_string);
-            }
-            catch
-            {
-                log.Info("Getting minimum score from environment variable failed.");
-            }
-            log.Info($"Using minimum score {minimumScore}.");
-            
+            float minimumScore = GetScoreFromEnv("AZTWITTERSAR_MINSCORE", log, 0.01f);
+            float minimumScoreAlert = GetScoreFromEnv("AZTWITTERSAR_MINSCORE_ALERT", log, 0.1f);
+
             float score = ScoreTweet(TweetText, out string highlightedText);
             int sendResult = 0;
             if (score > minimumScore)
             {
                 log.Info("Minimum score exceeded, send message to Slack!");
                 string CreatedAtLocalTime = ConvertUtcToLocal(CreatedAt);
-                string slackMsg = //$"@channel\n{TweetText}\n"
+                string slackMsg = "";
+                if (score > minimumScoreAlert)
+                    slackMsg += $"@channel\n";
+                slackMsg +=
                     $"{highlightedText}\n"
-                    // + $"Publisert: {CreatedAtLocalTime}\n"
-                    + $"Score (v03): {score.ToString("F", CultureInfo.InvariantCulture)}\n" 
+                    + $"Score (v03): {score.ToString("F", CultureInfo.InvariantCulture)}\n"
                     + $"Link: http://twitter.com/politivest/status/{TweetId}";
 
                 log.Info($"Message: {slackMsg}");
@@ -95,6 +88,25 @@ namespace AzTwitterSar
                                      "Error sending message to slack.")
                 : req.CreateResponse(HttpStatusCode.OK,
                                      "Message sent to slack: OK.");
+        }
+
+        private static float GetScoreFromEnv(string envVarName,
+            TraceWriter log, float defaultScore)
+        {
+            float score = defaultScore;
+            try
+            {
+                string min_score_string = Environment.GetEnvironmentVariable(envVarName);
+                score = float.Parse(min_score_string);
+                log.Info($"Got score from environment variable {envVarName}: "
+                    + "{score}.");
+            }
+            catch
+            {
+                log.Info($"Getting score from environment variable {envVarName}"
+                    + " failed, using default: {score}.");
+            }
+            return score;
         }
 
         /// <summary>
