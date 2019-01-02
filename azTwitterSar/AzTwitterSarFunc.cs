@@ -25,24 +25,32 @@ namespace AzTwitterSar
                 "sakn", // -a, -et
                 "teaksjon", // le-, lei-
                 "leite", "leting", "leter", "søk",
-                "redningsaksjon",
-                "bekymringsmelding", "borte", "sist sett",
+                "redningsaksjon", "redning", "redningsoppdrag",
+                "bekymringsmelding", "borte", "sist sett", // "sist sett" vil ikke matche enkeltord!
                 "værfast",
                 "helikopter", "chc", "luftamb",
-                "scooter",
-                "hundepatrulje", "redningshund",
+                "scooter", "firehjul", "4-hjul",
+                "hundepatrulje", "redningshund", "ekvipasje",
                 "dement",
                 "beskrivelse", "signalement",
                 "skred",
-                "røde",  "kors", "hjelpekorps",
+                "røde",  "kors", "hjelpekorps", "hjelpemannskap",
+                "alpin", "redningsgruppe",
                 //"fjell", too many false positives, 20181223 
                 "byfjell",
+                "evakuer",
+                "turgåer",
+                "frivillige",
             };
+        // "komme(t) til rette"
 
         public static string[] irrelevantStrings = new string[] {
-            "forsøk", "undersøk", // søk
-            "borttatt"
+            "forsøk", "undersøk", "ansøk", "asylsøk", "besøk", "søknad",
+            "oppsøk", "søksmål", "saksøk",   // søk
+            "borttatt",
+            "spredning", "redningsarbeid", // redning
         };
+        // discard completely: "Trolltunga"
 
 
         [FunctionName("ReceiveTweet")]
