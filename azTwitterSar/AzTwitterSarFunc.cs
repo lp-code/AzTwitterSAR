@@ -32,7 +32,7 @@ namespace AzTwitterSar
                 "scooter", "firehjul", "4-hjul",
                 "hundepatrulje", "redningshund", "ekvipasje",
                 "dement",
-                "beskrivelse", "signalement",
+                "beskrivelse", "signalement", "kledd",
                 "skred",
                 "røde",  "kors", "hjelpekorps", "hjelpemannskap",
                 "alpin", "redningsgruppe",
@@ -41,14 +41,19 @@ namespace AzTwitterSar
                 "evakuer",
                 "turgåer",
                 "frivillige",
+                "forsv", // forsvunnet, forsvant
+                "funn",
+                "behold", "behald",
+                "rette", // "komme(t) til rette"
             };
-        // "komme(t) til rette"
 
         public static string[] irrelevantStrings = new string[] {
             "forsøk", "undersøk", "ansøk", "asylsøk", "besøk", "søknad",
             "oppsøk", "søksmål", "saksøk",   // søk
             "borttatt",
             "spredning", "redningsarbeid", // redning
+            "forsvar", // forsv
+            "opprette", // rette
         };
         // discard completely: "Trolltunga"
 

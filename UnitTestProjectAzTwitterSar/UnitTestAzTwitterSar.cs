@@ -85,8 +85,7 @@ namespace UnitTestProjectAzTwitterSar
 
             // The tweet has 27 words, but here the minimum in the denominator
             // in the score function selects the number of trigger words.
-            float expectedScore = (float)7 /
-                AzTwitterSarFunc.relevantStrings.Length;
+            float expectedScore = (float)7 / 27;
             Assert.AreEqual(expectedScore, res, 0.001f);
 
             Assert.AreEqual(
@@ -99,15 +98,17 @@ namespace UnitTestProjectAzTwitterSar
         [TestMethod]
         public void Test_ScoreTweet3()
         {
-            float res = AzTwitterSarFunc.ScoreTweet(
+            string txt =
                 "#Kaupanger Politiet har leitet etter en mann i 30-årene siden"
                 + " kl 04 i natt etter melding om beruset person som framsto "
                 + "ute av stand til å ivareta seg selv. Lokalt politi fått "
-                + "bistand fra Røde Kors og Norske redningshunder. Vedkommende"
-                + "funnet ca kl 0930 i god behold.", out string highlightedText);
+                + "bistand fra Røde Kors og Norske redningshunder. Vedkommende "
+                + "funnet ca kl 0930 i god behold.";
+            float res = AzTwitterSarFunc.ScoreTweet(txt, out string highlightedText);
 
-            float expectedScore = (float)4 /
-                AzTwitterSarFunc.relevantStrings.Length;
+            float expectedScore = (float)6 / Math.Min(
+                AzTwitterSarFunc.relevantStrings.Length,
+                txt.Split().Length);
             Assert.AreEqual(expectedScore, res, 0.001f);
 
             Assert.AreEqual(
@@ -115,7 +116,7 @@ namespace UnitTestProjectAzTwitterSar
                 + " kl 04 i natt etter melding om beruset person som framsto "
                 + "ute av stand til å ivareta seg selv. Lokalt politi fått "
                 + "bistand fra *Røde* *Kors* og Norske *redningshunder.* Vedkommende"
-                + "funnet ca kl 0930 i god behold.", highlightedText);
+                + " *funnet* ca kl 0930 i god *behold.*", highlightedText);
         }
 
         [TestMethod]
