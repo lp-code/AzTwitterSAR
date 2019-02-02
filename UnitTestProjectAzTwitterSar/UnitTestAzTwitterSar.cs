@@ -151,6 +151,30 @@ namespace UnitTestProjectAzTwitterSar
                 highlightedText);
         }
 
+        [TestMethod]
+        public void Test_Blacklisting1()
+        {
+            float res = AzTwitterSarFunc.ScoreTweet(
+                "#Bergen: E16 v/Takvam. Patr stanset bil, mistanke om kjøring" +
+                " i ruspåvirket tilstand. Funn av narkotika i bilen. Fører " +
+                "innsettes i fengsling forvaring. Sak opprettes.",
+                out string highlightedText);
+
+            float expectedScore = 0; // blacklist "narkotika"
+            Assert.AreEqual(expectedScore, res, 0.001f);
+        }
+
+        [TestMethod]
+        public void Test_Blacklisting2()
+        {
+            float res = AzTwitterSarFunc.ScoreTweet(
+                "Har *gjennomsøkt* boligen. Ingen brann på stedet. " +
+                "Brannvesenet avslutter på stedet.",
+                out string highlightedText);
+
+            float expectedScore = 0; // blacklist "brann"
+            Assert.AreEqual(expectedScore, res, 0.001f);
+        }
 
     }
 }

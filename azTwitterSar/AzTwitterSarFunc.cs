@@ -54,9 +54,14 @@ namespace AzTwitterSar
             "spredning", "redningsarbeid", // redning
             "forsvar", // forsv
             "opprette", // rette
+            "deretter", // rette
         };
         // discard completely: "Trolltunga"
 
+        public static string[] blacklistStrings = new string[]
+        {
+            "narkotika", "hasj", "røyk", "tørrkoking", "brann", "innbrudd"
+        };
 
         [FunctionName("ReceiveTweet")]
         public static async Task<HttpResponseMessage> Run(
@@ -207,8 +212,22 @@ namespace AzTwitterSar
                     highlightedText += " " + word;
             }
             highlightedText = highlightedText.Trim();
-            return ((float)found) / Math.Min(relevantStrings.Length, 
+            float score = ((float)found) / Math.Min(relevantStrings.Length,
                                              CountWordsInString(text));
+
+            // Last step: blacklisting; if any of the words in blacklistStrings
+            // occurs in the tweet then its score will be set to zero whatever
+            // it was before.
+            string textLower = text.ToLower();
+            foreach (string blacklistWord in blacklistStrings)
+            {
+                if (textLower.Contains(blacklistWord))
+                {
+                    score = 0;
+                }
+            }
+
+            return score;
         }
 
         /// <summary>
