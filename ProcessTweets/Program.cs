@@ -15,20 +15,20 @@ namespace ProcessTweets
             //Create COM Objects. Create a COM object for everything that is referenced
             Excel.Application xlApp = new Excel.Application();
             Excel.Workbooks xlWorkbooks = xlApp.Workbooks;
-            Excel.Workbook xlWorkbook = xlWorkbooks.Open(@"C:\Users\lpesch\Private\RKH\TwitterSAR\Tweets\1_ProcessedScript\vicinitas_user_tweets_vest_201812291715.xlsx");
+            Excel.Workbook xlWorkbook = xlWorkbooks.Open(@"C:\Users\lpesch\Private\RKH\TwitterSAR\Tweets\1_ProcessedScript\vicinitas_user_tweets_vest_scoring_layout.xlsx");
             Excel._Worksheet xlWorksheet = xlWorkbook.Sheets[1];
             Excel.Range xlRange = xlWorksheet.UsedRange;
 
             int i = 2;
             int nonzeroScores = 0;
-            while (xlRange.Cells[i, 2] != null && xlRange.Cells[i, 2].Value2 != null)
+            while (xlRange.Cells[i, 4] != null && xlRange.Cells[i, 4].Value2 != null)
             {
                 // run the scoring function, output if nonzero
-                float score = AzTwitterSar.AzTwitterSarFunc.ScoreTweet(xlRange.Cells[i, 2].Value2.ToString(), out string _);
-                xlRange.Cells[i, 4].Value2 = score;
+                float score = AzTwitterSar.AzTwitterSarFunc.ScoreTweet(xlRange.Cells[i, 4].Value2.ToString(), out string _);
+                xlRange.Cells[i, 2].Value2 = score;
                 if (score > 0)
                 {
-                    Console.WriteLine(xlRange.Cells[i, 2].Value2.ToString());
+                    Console.WriteLine(xlRange.Cells[i, 4].Value2.ToString());
                     Console.WriteLine($"Score: {score}");
                     nonzeroScores++;
                 }
