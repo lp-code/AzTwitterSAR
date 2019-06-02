@@ -29,7 +29,7 @@ namespace AzTwitterSar
                 "bekymringsmelding", "borte", "sist sett", // "sist sett" vil ikke matche enkeltord!
                 "værfast",
                 "helikopter", "chc", "luftamb",
-                "scooter", "firehjul", "4-hjul",
+                "snøscooter", "firehjul", "4-hjul", // "scooter" gives too many false positives
                 "hundepatrulje", "redningshund", "ekvipasje",
                 "dement",
                 "beskrivelse", "signalement", "kledd",
@@ -60,7 +60,7 @@ namespace AzTwitterSar
 
         public static string[] blacklistStrings = new string[]
         {
-            "narkotika", "hasj", "røyk", "tørrkoking", "brann", "innbrudd"
+            "narkoti", "hasj", "røyk", "tørrkoking", "brann", "innbrudd", "gjernings"
         };
 
         [FunctionName("ReceiveTweet")]
@@ -94,7 +94,7 @@ namespace AzTwitterSar
                     slackMsg += $"@channel\n";
                 slackMsg +=
                     $"{highlightedText}\n"
-                    + $"Score (v03): {score.ToString("F", CultureInfo.InvariantCulture)}\n"
+                    + $"Score (v04): {score.ToString("F", CultureInfo.InvariantCulture)}\n"
                     + $"Link: http://twitter.com/politivest/status/{TweetId}";
 
                 log.Info($"Message: {slackMsg}");
