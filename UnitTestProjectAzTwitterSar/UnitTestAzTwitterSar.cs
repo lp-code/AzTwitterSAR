@@ -176,5 +176,15 @@ namespace UnitTestProjectAzTwitterSar
             Assert.AreEqual(expectedScore, res, 0.001f);
         }
 
+        [TestMethod]
+        public void Test_Blacklisting3()
+        {
+            float res = AzTwitterSarFunc.ScoreTweet(
+                "Rettelse: kun en bil som er involvert.",
+                out string highlightedText);
+
+            float expectedScore = 0; // blacklist "rettelse"
+            Assert.AreEqual(expectedScore, res, 0.001f);
+        }
     }
 }

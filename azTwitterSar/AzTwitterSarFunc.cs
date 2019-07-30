@@ -55,12 +55,13 @@ namespace AzTwitterSar
             "forsvar", // forsv
             "opprette", // rette
             "deretter", // rette
+            "rettelse", // rette
         };
         // discard completely: "Trolltunga"
 
         public static string[] blacklistStrings = new string[]
         {
-            "narkoti", "hasj", "røyk", "tørrkoking", "brann", "innbrudd", "gjernings"
+            "narkoti", "hasj", "røyk", "tørrkoking", "brann", "innbrudd", "gjernings", "tyve"
         };
 
         [FunctionName("ReceiveTweet")]
