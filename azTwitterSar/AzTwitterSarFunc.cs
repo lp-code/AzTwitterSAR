@@ -61,7 +61,8 @@ namespace AzTwitterSar
 
         public static string[] blacklistStrings = new string[]
         {
-            "narkoti", "hasj", "røyk", "tørrkoking", "brann", "innbrudd", "gjernings", "tyve"
+            "narkoti", "hasj", "røyk", "tørrkoking", "brann", "innbrudd",
+            "gjernings", "tyve", "pålegg",
         };
 
         [FunctionName("ReceiveTweet")]
@@ -95,7 +96,7 @@ namespace AzTwitterSar
                     slackMsg += $"@channel\n";
                 slackMsg +=
                     $"{highlightedText}\n"
-                    + $"Score (v04): {score.ToString("F", CultureInfo.InvariantCulture)}\n"
+                    + $"Score (v05): {score.ToString("F", CultureInfo.InvariantCulture)}\n"
                     + $"Link: http://twitter.com/politivest/status/{TweetId}";
 
                 log.Info($"Message: {slackMsg}");
