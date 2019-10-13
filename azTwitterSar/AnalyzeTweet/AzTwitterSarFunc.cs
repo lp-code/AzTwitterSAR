@@ -1,3 +1,7 @@
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.WebJobs.Host;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -5,10 +9,6 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Host;
-using Newtonsoft.Json;
 
 namespace AzTwitterSar
 {
@@ -269,7 +269,7 @@ namespace AzTwitterSar
             // but the Azure Logic app's JSON output actually contains a 
             // different format, namely "2018-12-14T23:47:57.000Z".
             string dateNoMillisec = dateIn.Substring(0, 19);
-            string res = "";
+            string res;
             try
             {
                 DateTime dtUtc = DateTime.ParseExact(dateNoMillisec, "s",
