@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AzTwitterSar.ProcessTweets;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -53,11 +54,21 @@ namespace AzTwitterSar.CheckTwitter
 
             var tweets = await GetNewTweets.GetTweetsSinceLastProcessed(log);
 
-            // Prepare for logging all tweets to table storage.
-            TweetLogger tweetLogger = new TweetLogger(log);
+            if (tweets != null && tweets.Any())
+            {
+                // Prepare for logging all tweets to table storage.
+                TweetLogger tweetLogger = new TweetLogger(log);
 
-            foreach (var tweet in tweets)
-                await tweetLogger.LogTweet(tweet, 0.0);
+                foreach (var tweet in tweets)
+                {
+                    float score = await AzTwitterSarFunc.ScoreAndPostTweet(tweet, log);
+                    await tweetLogger.LogTweet(tweet, score);
+                }
+            }
+            else
+            {
+                log.LogInformation("No new tweets.");
+            }
         }
     }
 }

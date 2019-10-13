@@ -1,6 +1,7 @@
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -9,8 +10,9 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Tweetinvi.Models;
 
-namespace AzTwitterSar
+namespace AzTwitterSar.ProcessTweets
 {
     public static class AzTwitterSarFunc
     {
@@ -65,22 +67,14 @@ namespace AzTwitterSar
             "gjernings", "tyve", "pålegg",
         };
 
-        [FunctionName("ReceiveTweet")]
-        public static async Task<HttpResponseMessage> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]HttpRequestMessage req, 
-            TraceWriter log)
+        
+        public static async Task<float> ScoreAndPostTweet(ITweet tweet, ILogger log)
         {
-            log.Info("AzTwitterSarFunc.Run: enter.");
+            log.LogInformation("AzTwitterSarFunc.Run: enter.");
 
-            // Get request body
-            dynamic data = await req.Content.ReadAsAsync<object>();
-            string TweetId = data?.tweetid;
-            string CreatedAt = data?.createdat;
-            string TweetText = data?.tweettext;
-
-            if (TweetId == null || CreatedAt == null || TweetText == null)
-                return req.CreateResponse(HttpStatusCode.BadRequest,
-                    "Please pass all required parameters in the request body!");
+            // Get request tweet info.
+            string TweetId = tweet.IdStr;
+            string TweetText = tweet.FullText;
 
             float minimumScore = GetScoreFromEnv("AZTWITTERSAR_MINSCORE", log, 0.01f);
             float minimumScoreAlert = GetScoreFromEnv("AZTWITTERSAR_MINSCORE_ALERT", log, 0.1f);
@@ -89,8 +83,7 @@ namespace AzTwitterSar
             int sendResult = 0;
             if (score > minimumScore)
             {
-                log.Info("Minimum score exceeded, send message to Slack!");
-                string CreatedAtLocalTime = ConvertUtcToLocal(CreatedAt);
+                log.LogInformation("Minimum score exceeded, send message to Slack!");
                 string slackMsg = "";
                 if (score > minimumScoreAlert)
                     slackMsg += $"@channel\n";
@@ -99,31 +92,27 @@ namespace AzTwitterSar
                     + $"Score (v05): {score.ToString("F", CultureInfo.InvariantCulture)}\n"
                     + $"Link: http://twitter.com/politivest/status/{TweetId}";
 
-                log.Info($"Message: {slackMsg}");
+                log.LogInformation($"Message: {slackMsg}");
                 sendResult = PostSlackMessage(log, slackMsg);
             }
-            log.Info("AzTwitterSarFunc.Run: exit.");
-            return (sendResult != 0)
-                ? req.CreateResponse(HttpStatusCode.BadRequest,
-                                     "Error sending message to slack.")
-                : req.CreateResponse(HttpStatusCode.OK,
-                                     "Message sent to slack: OK.");
+            log.LogInformation("AzTwitterSarFunc.Run: exit.");
+            return score;
         }
 
         private static float GetScoreFromEnv(string envVarName,
-            TraceWriter log, float defaultScore)
+            ILogger log, float defaultScore)
         {
             float score = defaultScore;
             try
             {
                 string min_score_string = Environment.GetEnvironmentVariable(envVarName);
                 score = float.Parse(min_score_string);
-                log.Info($"Got score from environment variable {envVarName}: "
+                log.LogInformation($"Got score from environment variable {envVarName}: "
                     + "{score}.");
             }
             catch
             {
-                log.Info($"Getting score from environment variable {envVarName}"
+                log.LogInformation($"Getting score from environment variable {envVarName}"
                     + " failed, using default: {score}.");
             }
             return score;
@@ -135,9 +124,9 @@ namespace AzTwitterSar
         /// <param name="log">Logger instance.</param>
         /// <param name="msg"> Message to be posted.</param>
         /// <returns>Status code: 0 = success.</returns>
-        public static int PostSlackMessage(TraceWriter log, string msg)
+        public static int PostSlackMessage(ILogger log, string msg)
         {
-            log.Info("PostSlackMessage: enter.");
+            log.LogInformation("PostSlackMessage: enter.");
 
             var slackWebHook = Environment.GetEnvironmentVariable(
                 "AZTWITTERSAR_SLACKHOOK");
@@ -165,8 +154,8 @@ namespace AzTwitterSar
                 result = streamReader.ReadToEnd();
             }
             
-            log.Info("PostSlackMessage: response: " + result);
-            log.Info("PostSlackMessage: exit.");
+            log.LogInformation("PostSlackMessage: response: " + result);
+            log.LogInformation("PostSlackMessage: exit.");
             return 0;
         }
 
