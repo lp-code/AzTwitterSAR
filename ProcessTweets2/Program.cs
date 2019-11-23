@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,23 +12,26 @@ namespace ProcessTweets
     {
         static void Main(string[] args)
         {
+            const string fileName = "C:\\User\\lpesch\\test.xlsx";
+            Console.WriteLine(fileName);
+            Console.ReadLine();
             //Create COM Objects. Create a COM object for everything that is referenced
             Excel.Application xlApp = new Excel.Application();
             Excel.Workbooks xlWorkbooks = xlApp.Workbooks;
-            Excel.Workbook xlWorkbook = xlWorkbooks.Open(@"C:\Users\lpesch\Private\RKH\TwitterSAR\Tweets\1_ProcessedScript\vicinitas_user_tweets_vest_scoring_layout.xlsx");
-            Excel._Worksheet xlWorksheet = xlWorkbook.Sheets[1];
+            Excel.Workbook xlWorkbook = xlWorkbooks.Open(fileName); // @"C:\Users\lpesch\Private\RKH\TwitterSAR\Tweets\1_ProcessedScript\vicinitas_user_tweets_vest_scoring_layout.xlsx");
+            Excel._Worksheet xlWorksheet = (Excel.Worksheet)xlWorkbook.Sheets[1];
             Excel.Range xlRange = xlWorksheet.UsedRange;
 
             int i = 2;
             int nonzeroScores = 0;
-            while (xlRange.Cells[i, 4] != null && xlRange.Cells[i, 4].Value2 != null)
+            while (xlRange.Cells[i, 4] != null && ((Excel.Range)xlRange.Cells[i, 4]).Value2 != null)
             {
                 // run the scoring function, output if nonzero
-                float score = AzTwitterSar.AzTwitterSarFunc.ScoreTweet(xlRange.Cells[i, 4].Value2.ToString(), out string _);
-                xlRange.Cells[i, 2].Value2 = score;
+                float score = AzTwitterSar.ProcessTweets.AzTwitterSarFunc.ScoreTweet(((Excel.Range)xlRange.Cells[i, 4]).Value2.ToString(), out string _);
+                ((Excel.Range)xlRange.Cells[i, 2]).Value2 = score;
                 if (score > 0)
                 {
-                    Console.WriteLine(xlRange.Cells[i, 4].Value2.ToString());
+                    Console.WriteLine(((Excel.Range)xlRange.Cells[i, 4]).Value2.ToString());
                     Console.WriteLine($"Score: {score}");
                     nonzeroScores++;
                 }

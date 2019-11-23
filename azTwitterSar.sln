@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzTwitterSar", "azTwitterSa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTestProjectAzTwitterSar", "UnitTestProjectAzTwitterSar\UnitTestProjectAzTwitterSar.csproj", "{82A7157D-0C4A-4A5F-B23C-CBC8BD488AE2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProcessTweets", "ProcessTweets\ProcessTweets.csproj", "{2DEB34FF-81F5-4879-B763-C65FD48380A9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProcessTweets2", "ProcessTweets2\ProcessTweets2.csproj", "{26B537DA-F5BD-4506-9EBF-0F521600F1DB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,10 @@ Global
 		{82A7157D-0C4A-4A5F-B23C-CBC8BD488AE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{82A7157D-0C4A-4A5F-B23C-CBC8BD488AE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{82A7157D-0C4A-4A5F-B23C-CBC8BD488AE2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2DEB34FF-81F5-4879-B763-C65FD48380A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2DEB34FF-81F5-4879-B763-C65FD48380A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2DEB34FF-81F5-4879-B763-C65FD48380A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2DEB34FF-81F5-4879-B763-C65FD48380A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{26B537DA-F5BD-4506-9EBF-0F521600F1DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26B537DA-F5BD-4506-9EBF-0F521600F1DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26B537DA-F5BD-4506-9EBF-0F521600F1DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26B537DA-F5BD-4506-9EBF-0F521600F1DB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
