@@ -13,7 +13,7 @@ namespace ProcessTweets
     {
         static void Main(string[] args)
         {
-            const string fileName = @"C:\Users\lpesch\Private\RKH\TwitterSAR\Tweets\1_ProcessedScript\vicinitas_user_tweets_vest_scoring_layout.xlsx";
+            const string fileName = @"C:\Users\lpesch\Private\RKH\TwitterSAR\TwitterSARai\data\raw\vicinitas_user_tweets_vest_scoring_layout.xlsx";
             var fi = new FileInfo(fileName);
             using (var package = new ExcelPackage(fi))
             {
