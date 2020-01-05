@@ -47,6 +47,8 @@ namespace AzTwitterSar.ProcessTweets
                 "funn",
                 "behold", "behald",
                 "rette", // "komme(t) til rette"
+                "iført",
+                // "observ", // try this when the AI negative filter is active
             };
 
         public static string[] irrelevantStrings = new string[] {
@@ -60,7 +62,7 @@ namespace AzTwitterSar.ProcessTweets
             "rettelse", // rette
             "korskirkeallmenning", // Kors
             "korskirkeveiten",
-            "Rossleitet", // leite
+            "rossleitet", // leite
             "korsrygg",
         };
         // discard completely: "Trolltunga"
