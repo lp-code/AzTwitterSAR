@@ -1,8 +1,8 @@
-ï»¿using System;
-using AzTwitterSar;
+using System;
+using AzTwitterSar.ProcessTweets;
 using Xunit;
 
-namespace UnitTestProjectAzTwitterSar
+namespace AzTwitterSarUnitTest
 {
     public class UnitTestAzTwitterSar
     {
@@ -10,8 +10,8 @@ namespace UnitTestProjectAzTwitterSar
         public void Test_CountWordsInString1()
         {
             int res = AzTwitterSarFunc.CountWordsInString(
-                "#Bergen, Danmarksplass: Politiet har gjennomfÃ¸rt farts"
-                + "kontroll. 9 forenklede forelegg, 2 fÃ¸rerkortbeslag, hÃ¸yeste"
+                "#Bergen, Danmarksplass: Politiet har gjennomført farts"
+                + "kontroll. 9 forenklede forelegg, 2 førerkortbeslag, høyeste"
                 + " fart var 112 km/t i 50-sonen.");
 
             Assert.Equal(18, res);
@@ -21,10 +21,10 @@ namespace UnitTestProjectAzTwitterSar
         public void Test_CountWordsInString2()
         {
             int res = AzTwitterSarFunc.CountWordsInString(
-                "#Espeland Bergen: Mann i 40 Ã¥rene er savnet fra bopel det er"
-                + " iverksatt leteaksjon. Mannskap fra RÃ¸de Kors Norske "
-                + "Redningshunder samt Norsk Luftambulanse deltar forelÃ¸pig i"
-                + " sÃ¸ket.");
+                "#Espeland Bergen: Mann i 40 årene er savnet fra bopel det er"
+                + " iverksatt leteaksjon. Mannskap fra Røde Kors Norske "
+                + "Redningshunder samt Norsk Luftambulanse deltar foreløpig i"
+                + " søket.");
             Assert.Equal(27, res);
         }
 
@@ -32,7 +32,7 @@ namespace UnitTestProjectAzTwitterSar
         public void Test_CountWordsInString3()
         {
             int res = AzTwitterSarFunc.CountWordsInString(
-                "Saknet person i skred, politiet undersÃ¸ker. ForsÃ¸k forsÃ¸kt.");
+                "Saknet person i skred, politiet undersøker. Forsøk forsøkt.");
             Assert.Equal(8, res);
         }
 
@@ -65,8 +65,8 @@ namespace UnitTestProjectAzTwitterSar
         public void Test_ScoreTweet1()
         {
             float res = AzTwitterSarFunc.ScoreTweet(
-                "#Bergen, Danmarksplass: Politiet har gjennomfÃ¸rt farts"
-                + "kontroll. 9 forenklede forelegg, 2 fÃ¸rerkortbeslag, hÃ¸yeste"
+                "#Bergen, Danmarksplass: Politiet har gjennomført farts"
+                + "kontroll. 9 forenklede forelegg, 2 førerkortbeslag, høyeste"
                 + " fart var 112 km/t i 50-sonen.", out string _);
 
             Assert.Equal(0, res);
@@ -77,10 +77,10 @@ namespace UnitTestProjectAzTwitterSar
         {
             //string highlightedText = "";
             float res = AzTwitterSarFunc.ScoreTweet(
-                "#Espeland Bergen: Mann i 40 Ã¥rene er savnet fra bopel det er"
-                + " iverksatt leteaksjon. Mannskap fra RÃ¸de Kors Norske "
-                + "Redningshunder samt Norsk Luftambulanse deltar forelÃ¸pig i"
-                + " sÃ¸ket.", out string highlightedText);
+                "#Espeland Bergen: Mann i 40 årene er savnet fra bopel det er"
+                + " iverksatt leteaksjon. Mannskap fra Røde Kors Norske "
+                + "Redningshunder samt Norsk Luftambulanse deltar foreløpig i"
+                + " søket.", out string highlightedText);
 
             // The tweet has 27 words, but here the minimum in the denominator
             // in the score function selects the number of trigger words.
@@ -88,20 +88,20 @@ namespace UnitTestProjectAzTwitterSar
             Assert.Equal(expectedScore, res, 3);
 
             Assert.Equal(
-                "#Espeland Bergen: Mann i 40 Ã¥rene er *savnet* fra bopel det er"
-                + " iverksatt *leteaksjon.* Mannskap fra *RÃ¸de* *Kors* Norske "
-                + "*Redningshunder* samt Norsk *Luftambulanse* deltar forelÃ¸pig i"
-                + " *sÃ¸ket.*", highlightedText);
+                "#Espeland Bergen: Mann i 40 årene er *savnet* fra bopel det er"
+                + " iverksatt *leteaksjon.* Mannskap fra *Røde* *Kors* Norske "
+                + "*Redningshunder* samt Norsk *Luftambulanse* deltar foreløpig i"
+                + " *søket.*", highlightedText);
         }
 
         [Fact]
         public void Test_ScoreTweet3()
         {
             string txt =
-                "#Kaupanger Politiet har leitet etter en mann i 30-Ã¥rene siden"
+                "#Kaupanger Politiet har leitet etter en mann i 30-årene siden"
                 + " kl 04 i natt etter melding om beruset person som framsto "
-                + "ute av stand til Ã¥ ivareta seg selv. Lokalt politi fÃ¥tt "
-                + "bistand fra RÃ¸de Kors og Norske redningshunder. Vedkommende "
+                + "ute av stand til å ivareta seg selv. Lokalt politi fått "
+                + "bistand fra Røde Kors og Norske redningshunder. Vedkommende "
                 + "funnet ca kl 0930 i god behold.";
             float res = AzTwitterSarFunc.ScoreTweet(txt, out string highlightedText);
 
@@ -111,10 +111,10 @@ namespace UnitTestProjectAzTwitterSar
             Assert.Equal(expectedScore, res, 3);
 
             Assert.Equal(
-                "#Kaupanger Politiet har *leitet* etter en mann i 30-Ã¥rene siden"
+                "#Kaupanger Politiet har *leitet* etter en mann i 30-årene siden"
                 + " kl 04 i natt etter melding om beruset person som framsto "
-                + "ute av stand til Ã¥ ivareta seg selv. Lokalt politi fÃ¥tt "
-                + "bistand fra *RÃ¸de* *Kors* og Norske *redningshunder.* Vedkommende"
+                + "ute av stand til å ivareta seg selv. Lokalt politi fått "
+                + "bistand fra *Røde* *Kors* og Norske *redningshunder.* Vedkommende"
                 + " *funnet* ca kl 0930 i god *behold.*", highlightedText);
         }
 
@@ -123,14 +123,14 @@ namespace UnitTestProjectAzTwitterSar
         {
             string originalText =
                 "#Bergen, Nordre Toppe: Ordensforstyrrelse, ruset og aggressiv"
-                + " mann, i forbindelse med innbringelsen, forsÃ¸kte han Ã¥ "
+                + " mann, i forbindelse med innbringelsen, forsøkte han å "
                 + "skalle til en politibetjent, samt en politibetjent ble "
-                + "spyttet i Ã¸yet, mannen innsatt i Arresten, anmeldt for "
+                + "spyttet i øyet, mannen innsatt i Arresten, anmeldt for "
                 + "vold mot off. tjenestemann.";
-            float res = AzTwitterSarFunc.ScoreTweet(originalText, 
+            float res = AzTwitterSarFunc.ScoreTweet(originalText,
                 out string highlightedText);
 
-            Assert.Equal((float)0, res,3);
+            Assert.Equal((float)0, res, 3);
 
             Assert.Equal(originalText, highlightedText);
         }
@@ -139,14 +139,14 @@ namespace UnitTestProjectAzTwitterSar
         public void Test_ScoreTweet5()
         {
             float res = AzTwitterSarFunc.ScoreTweet(
-                "Saknet person i skred, politiet undersÃ¸ker. ForsÃ¸k forsÃ¸kt.",
+                "Saknet person i skred, politiet undersøker. Forsøk forsøkt.",
                 out string highlightedText);
 
             float expectedScore = (float)2 / 8; // only eight words in text
             Assert.Equal(expectedScore, res, 3);
 
             Assert.Equal(
-                "*Saknet* person i *skred,* politiet undersÃ¸ker. ForsÃ¸k forsÃ¸kt.",
+                "*Saknet* person i *skred,* politiet undersøker. Forsøk forsøkt.",
                 highlightedText);
         }
 
@@ -154,8 +154,8 @@ namespace UnitTestProjectAzTwitterSar
         public void Test_Blacklisting1()
         {
             float res = AzTwitterSarFunc.ScoreTweet(
-                "#Bergen: E16 v/Takvam. Patr stanset bil, mistanke om kjÃ¸ring" +
-                " i ruspÃ¥virket tilstand. Funn av narkotika i bilen. FÃ¸rer " +
+                "#Bergen: E16 v/Takvam. Patr stanset bil, mistanke om kjøring" +
+                " i ruspåvirket tilstand. Funn av narkotika i bilen. Fører " +
                 "innsettes i fengsling forvaring. Sak opprettes.",
                 out string highlightedText);
 
@@ -167,8 +167,8 @@ namespace UnitTestProjectAzTwitterSar
         public void Test_Blacklisting2()
         {
             float res = AzTwitterSarFunc.ScoreTweet(
-                "Har *gjennomsÃ¸kt* boligen. Ingen brann pÃ¥ stedet. " +
-                "Brannvesenet avslutter pÃ¥ stedet.",
+                "Har *gjennomsøkt* boligen. Ingen brann på stedet. " +
+                "Brannvesenet avslutter på stedet.",
                 out string highlightedText);
 
             float expectedScore = 0; // blacklist "brann"
