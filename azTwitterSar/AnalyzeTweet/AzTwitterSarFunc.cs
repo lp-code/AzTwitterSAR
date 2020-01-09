@@ -60,8 +60,7 @@ namespace AzTwitterSar.ProcessTweets
             "opprette", // rette
             "deretter", // rette
             "rettelse", // rette
-            "korskirkeallmenning", // Kors
-            "korskirkeveiten",
+            "korskirke",
             "rossleitet", // leite
             "korsrygg",
         };
