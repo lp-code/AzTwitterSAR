@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using AzTwitterSar.ProcessTweets;
+using Newtonsoft.Json;
 using Xunit;
 
 namespace AzTwitterSarUnitTest
@@ -184,6 +186,22 @@ namespace AzTwitterSarUnitTest
 
             float expectedScore = 0; // blacklist "rettelse"
             Assert.Equal(expectedScore, res, 3);
+        }
+    }
+
+    public class UnitTestResponseData
+    {
+        [Fact]
+        public void Test_Decode1()
+        {
+
+            var responseContent = @"{'tags': ['placeA', 'placeB'], 'label': 1, 'text': 'hello', 'original': 'bla'}";
+            AzTwitterSar.ProcessTweets.ResponseData ml_result = JsonConvert.DeserializeObject<ResponseData>(responseContent);
+
+            Assert.Equal(new List<string> { "placeA", "placeB" }, ml_result.Tags);
+            Assert.Equal("hello", ml_result.Text);
+            Assert.Equal(1, ml_result.Label);
+            Assert.Equal("bla", ml_result.Original);
         }
     }
 }

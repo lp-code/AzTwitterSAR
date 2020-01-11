@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
@@ -58,10 +59,11 @@ namespace AzTwitterSar.CheckTwitter
             {
                 // Prepare for logging all tweets to table storage.
                 TweetLogger tweetLogger = new TweetLogger(log);
+                HttpClient httpClient = new HttpClient();
 
                 foreach (var tweet in tweets)
                 {
-                    float score = await AzTwitterSarFunc.ScoreAndPostTweet(tweet, log);
+                    float score = await AzTwitterSarFunc.ScoreAndPostTweet(tweet, httpClient, log);
                     await tweetLogger.LogTweet(tweet, score);
                 }
             }

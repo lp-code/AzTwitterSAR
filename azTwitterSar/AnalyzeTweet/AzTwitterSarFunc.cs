@@ -1,6 +1,3 @@
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
@@ -9,11 +6,27 @@ using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using Tweetinvi.Models;
 
 namespace AzTwitterSar.ProcessTweets
 {
+    public class ResponseData
+    {
+        [JsonProperty("tags")]
+        public List<string> Tags { get; set; }
+
+        [JsonProperty("text")]
+        public string Text { get; set; }
+
+        [JsonProperty("label")]
+        public int Label { get; set; }
+
+        [JsonProperty("original")]
+        public string Original { get; set; }
+    }
+
     public static class AzTwitterSarFunc
     {
         /// <summary>
@@ -73,7 +86,7 @@ namespace AzTwitterSar.ProcessTweets
         };
 
         
-        public static async Task<float> ScoreAndPostTweet(ITweet tweet, ILogger log)
+        public static async Task<float> ScoreAndPostTweet(ITweet tweet, HttpClient httpClient, ILogger log)
         {
             log.LogInformation("AzTwitterSarFunc.Run: enter.");
 
@@ -85,20 +98,45 @@ namespace AzTwitterSar.ProcessTweets
             float minimumScoreAlert = GetScoreFromEnv("AZTWITTERSAR_MINSCORE_ALERT", log, 0.1f);
 
             float score = ScoreTweet(TweetText, out string highlightedText);
-            int sendResult = 0;
+            
             if (score > minimumScore)
             {
-                log.LogInformation("Minimum score exceeded, send message to Slack!");
+                log.LogInformation("Minimum score exceeded, query ML filter.");
+
+                Uri ml_func_uri = new Uri(Environment.GetEnvironmentVariable("AZTWITTERSAR_AI_URI"));
+
+                var payload = JsonConvert.SerializeObject(new { tweet = TweetText });
+                var httpContent = new StringContent(payload, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage httpResponse = await httpClient.PostAsync(ml_func_uri, httpContent);
+
+                ResponseData ml_result = null;
+                if (httpResponse.Content != null)
+                {
+                    log.LogInformation("Calling ML-inference.");
+                    var responseContent = await httpResponse.Content.ReadAsStringAsync();
+
+                    ml_result = JsonConvert.DeserializeObject<ResponseData>(responseContent);
+                    log.LogInformation("ML-inferred label: {ml_result.Label}");
+                }
+                if (ml_result != null && ml_result.Label == 0)
+                {
+                    // When the ML filter says "no" then we return without posting to Slack.
+                    // To mark this type of result, we return the negative of the "manual" score.
+                    return -score;
+                }
+                // @todo The ML result has more than the label, should use e.g. the geographical tags, too.
                 string slackMsg = "";
                 if (score > minimumScoreAlert)
                     slackMsg += $"@channel\n";
                 slackMsg +=
                     $"{highlightedText}\n"
-                    + $"Score (v05): {score.ToString("F", CultureInfo.InvariantCulture)}\n"
+                    + $"Score (v2.0): {score.ToString("F", CultureInfo.InvariantCulture)}\n"
                     + $"Link: http://twitter.com/politivest/status/{TweetId}";
 
                 log.LogInformation($"Message: {slackMsg}");
-                sendResult = PostSlackMessage(log, slackMsg);
+                int sendResult = PostSlackMessage(log, slackMsg);
+                log.LogInformation($"Message posted to slack, result: {sendResult}");
             }
             log.LogInformation("AzTwitterSarFunc.Run: exit.");
             return score;
