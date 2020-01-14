@@ -23,8 +23,14 @@ namespace AzTwitterSar.ProcessTweets
         [JsonProperty("label")]
         public int Label { get; set; }
 
+        [JsonProperty("score")]
+        public float Score { get; set; }
+
         [JsonProperty("original")]
         public string Original { get; set; }
+
+        [JsonProperty("version")]
+        public string Version { get; set; }
     }
 
     public static class AzTwitterSarFunc
@@ -104,26 +110,43 @@ namespace AzTwitterSar.ProcessTweets
                 log.LogInformation("Minimum score exceeded, query ML filter.");
 
                 Uri ml_func_uri = new Uri(Environment.GetEnvironmentVariable("AZTWITTERSAR_AI_URI"));
-
                 var payload = JsonConvert.SerializeObject(new { tweet = TweetText });
                 var httpContent = new StringContent(payload, Encoding.UTF8, "application/json");
+                ResponseData ml_result;
+                float ml_score = -1.0F;
+                string ml_version = "";
 
-                HttpResponseMessage httpResponse = await httpClient.PostAsync(ml_func_uri, httpContent);
+                log.LogInformation("Calling ML-inference.");
+                HttpResponseMessage httpResponseMsg = await httpClient.PostAsync(ml_func_uri, httpContent);
 
-                ResponseData ml_result = null;
-                if (httpResponse.Content != null)
+                if (httpResponseMsg.StatusCode == HttpStatusCode.OK && httpResponseMsg.Content != null)
                 {
-                    log.LogInformation("Calling ML-inference.");
-                    var responseContent = await httpResponse.Content.ReadAsStringAsync();
+                    var responseContent = await httpResponseMsg.Content.ReadAsStringAsync();
 
                     ml_result = JsonConvert.DeserializeObject<ResponseData>(responseContent);
-                    log.LogInformation("ML-inferred label: {ml_result.Label}");
+                    if (ml_result != null)
+                    {
+                        ml_score = ml_result.Score;
+                        ml_version = ml_result.Version;
+
+                        log.LogInformation(
+                            $"ML-inference OK, label: {ml_result.Label}, "
+                            + $"score: {ml_score.ToString("F", CultureInfo.InvariantCulture)}, "
+                            + $"version: {ml_version}");
+                        if (ml_result.Label == 0)
+                        {
+                            // When the ML filter says "no" then we return without posting to Slack.
+                            // To mark this type of result, we return the negative of the "manual" score.
+                            return -score;
+                        }
+                    }
                 }
-                if (ml_result != null && ml_result.Label == 0)
+                else
                 {
-                    // When the ML filter says "no" then we return without posting to Slack.
-                    // To mark this type of result, we return the negative of the "manual" score.
-                    return -score;
+                    // We did not get a reply from the ML function, therefore
+                    // we fall back and continue according to the traditional
+                    // logic's result.
+                    log.LogInformation("ML inference failed or did not reply, rely on conventional logic.");
                 }
                 // @todo The ML result has more than the label, should use e.g. the geographical tags, too.
                 string slackMsg = "";
@@ -131,7 +154,8 @@ namespace AzTwitterSar.ProcessTweets
                     slackMsg += $"@channel\n";
                 slackMsg +=
                     $"{highlightedText}\n"
-                    + $"Score (v2.0): {score.ToString("F", CultureInfo.InvariantCulture)}\n"
+                    + $"Score (v2.0): {score.ToString("F", CultureInfo.InvariantCulture)}, "
+                    + $"ML ({ml_version}): {ml_score.ToString("F", CultureInfo.InvariantCulture)}\n"
                     + $"Link: http://twitter.com/politivest/status/{TweetId}";
 
                 log.LogInformation($"Message: {slackMsg}");
