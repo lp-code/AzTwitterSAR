@@ -68,6 +68,7 @@ namespace AzTwitterSar.ProcessTweets
                 "rette", // "komme(t) til rette"
                 "iført",
                 // "observ", // try this when the AI negative filter is active
+                "hår", // in many descriptions
             };
 
         public static string[] irrelevantStrings = new string[] {
@@ -87,8 +88,9 @@ namespace AzTwitterSar.ProcessTweets
 
         public static string[] blacklistStrings = new string[]
         {
-            "narkoti", "hasj", "røyk", "tørrkoking", "brann", "innbrudd",
-            "gjernings", "tyve", "pålegg",
+            "narkoti", "hasj", "røyk", "tørrkoking", "brann ", // brannvesen er OK!!!
+            "innbrudd", "gjernings", "tyve", "pålegg",
+            "håra", // place name in Hardanger
         };
 
         

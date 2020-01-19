@@ -187,6 +187,26 @@ namespace AzTwitterSarUnitTest
             float expectedScore = 0; // blacklist "rettelse"
             Assert.Equal(expectedScore, res, 3);
         }
+
+        [Fact]
+        public void Test_ErroneousTweet1()
+        {
+            // It turned out that it wasn't the line breaks in the tweet that
+            // caused it to be rated at zero, it was "Brannvesenet", which
+            // contains "brann". Fixed.
+            float res = AzTwitterSarFunc.ScoreTweet(
+@"#Misje #Øygarden
+
+Leteaksjon i området Misje.Siste observasjon er kl 0530.
+
+Beskrivelse: Mann 22 år, ca 180 cm, tynn, mørkt brunt hår.Iført sort jakke, blå t-shirt, sort bukse.
+
+Politi, Brannvesenet, Norske redningshunder, Røde Kors og Norsk folkehjelp bistår.",
+            out string highlightedText);
+
+            float expectedScore = 0.162F; // blacklist "rettelse"
+            Assert.Equal(expectedScore, res, 3);
+        }
     }
 
     public class UnitTestResponseData
