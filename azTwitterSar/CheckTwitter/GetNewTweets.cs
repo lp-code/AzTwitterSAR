@@ -60,6 +60,7 @@ namespace AzTwitterSar.CheckTwitter
                 // Prepare for logging all tweets to table storage.
                 TweetLogger tweetLogger = new TweetLogger(log);
                 HttpClient httpClient = new HttpClient();
+                httpClient.Timeout = TimeSpan.FromSeconds(30);
 
                 foreach (var tweet in tweets)
                 {
