@@ -32,6 +32,13 @@ namespace AzTwitterSar.CheckTwitter
 
             string lastTweetId = await checkpointManager.GetLastAsync();
 
+            // Note: The following does NOT get MaximumNumberOfResults tweets
+            //       from after lastTweetId!!! Rather it gets the most recent
+            //       tweets with the early limit defined by lastTweetId OR the
+            //       defined maximum, whichever is more limiting!
+            //       (Therefore, in order to test on past tweets, one may need
+            //       to increase MaximumNumberOfResults considerably to get ALL
+            //       tweets from the one targeted to the current one.
             var searchParameter = new SearchTweetsParameters("from:politivest")
             {
                 MaximumNumberOfResults = 10,
@@ -64,8 +71,8 @@ namespace AzTwitterSar.CheckTwitter
 
                 foreach (var tweet in tweets)
                 {
-                    float score = await AzTwitterSarFunc.ScoreAndPostTweet(tweet, httpClient, log);
-                    await tweetLogger.LogTweet(tweet, score);
+                    Tuple<float, float> scores = await AzTwitterSarFunc.ScoreAndPostTweet(tweet, httpClient, log);
+                    await tweetLogger.LogTweet(tweet, scores);
                 }
             }
             else

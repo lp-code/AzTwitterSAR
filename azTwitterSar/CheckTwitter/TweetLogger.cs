@@ -10,14 +10,15 @@ namespace AzTwitterSar.CheckTwitter
 {
     public class AnalyzedTweetEntity : TableEntity
     {
-        public AnalyzedTweetEntity(ITweet tweet, double score)
+        public AnalyzedTweetEntity(ITweet tweet, Tuple<float, float> scores)
         {
             PartitionKey = tweet.TweetLocalCreationDate.Year.ToString();
             RowKey = tweet.IdStr;
             this.FullText = tweet.FullText;
             this.CreatedAt = tweet.CreatedAt;
             this.Url = tweet.Url;
-            this.Score = score;
+            this.Score = scores.Item1;
+            this.ScoreML = scores.Item2;
         }
 
         public AnalyzedTweetEntity()
@@ -27,6 +28,7 @@ namespace AzTwitterSar.CheckTwitter
         public DateTime CreatedAt { get; set; }
         public string Url { get; set; }
         public double Score { get; set; }
+        public double ScoreML { get; set; }
     }
 
     class TweetLogger
@@ -55,11 +57,11 @@ namespace AzTwitterSar.CheckTwitter
             }
         }
 
-        public async Task LogTweet(ITweet tweet, double score)
+        public async Task LogTweet(ITweet tweet, Tuple<float, float> scores)
         {
             try
             {
-                AnalyzedTweetEntity entity = new AnalyzedTweetEntity(tweet, score);
+                AnalyzedTweetEntity entity = new AnalyzedTweetEntity(tweet, scores);
 
                 // Create the InsertOrReplace table operation
                 TableOperation insertOrMergeOperation = TableOperation.InsertOrMerge(entity);

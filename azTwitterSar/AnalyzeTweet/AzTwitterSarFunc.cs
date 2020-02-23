@@ -99,7 +99,7 @@ namespace AzTwitterSar.ProcessTweets
         };
 
         
-        public static async Task<float> ScoreAndPostTweet(ITweet tweet, HttpClient httpClient, ILogger log)
+        public static async Task<Tuple<float, float>> ScoreAndPostTweet(ITweet tweet, HttpClient httpClient, ILogger log)
         {
             log.LogInformation("AzTwitterSarFunc.Run: enter.");
 
@@ -111,7 +111,8 @@ namespace AzTwitterSar.ProcessTweets
             float minimumScoreAlert = GetScoreFromEnv("AZTWITTERSAR_MINSCORE_ALERT", log, 0.1f);
 
             float score = ScoreTweet(TweetText, out string highlightedText);
-            
+            float ml_score = -1.0F;
+
             if (score > minimumScore)
             {
                 log.LogInformation("Minimum score exceeded, query ML filter.");
@@ -133,7 +134,6 @@ namespace AzTwitterSar.ProcessTweets
                     log.LogInformation($"ML-inference link not configured.");
                 }
 
-                float ml_score = -1.0F;
                 string ml_version = "";
 
                 if (!(mlUriString is null)
@@ -156,7 +156,7 @@ namespace AzTwitterSar.ProcessTweets
                         {
                             // When the ML filter says "no" then we return without posting to Slack.
                             // To mark this type of result, we return the negative of the "manual" score.
-                            return -score;
+                            return Tuple.Create(score, ml_score);
                         }
                     }
                 }
@@ -182,7 +182,7 @@ namespace AzTwitterSar.ProcessTweets
                 log.LogInformation($"Message posted to slack, result: {sendResult}");
             }
             log.LogInformation("AzTwitterSarFunc.Run: exit.");
-            return score;
+            return Tuple.Create(score, ml_score);
         }
 
         private static float GetScoreFromEnv(string envVarName,
