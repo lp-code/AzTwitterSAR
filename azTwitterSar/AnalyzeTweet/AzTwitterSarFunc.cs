@@ -85,6 +85,9 @@ namespace AzTwitterSar.ProcessTweets
             "paradisleitet",
             "korsrygg",
             "kyskskreda",
+            "skredestranda",
+            "kveldsfesteskredo",
+            "skredhaugen",
         };
         // discard completely: "Trolltunga"
 
@@ -113,21 +116,33 @@ namespace AzTwitterSar.ProcessTweets
             {
                 log.LogInformation("Minimum score exceeded, query ML filter.");
 
-                Uri ml_func_uri = new Uri(Environment.GetEnvironmentVariable("AZTWITTERSAR_AI_URI"));
-                var payload = JsonConvert.SerializeObject(new { tweet = TweetText });
-                var httpContent = new StringContent(payload, Encoding.UTF8, "application/json");
-                ResponseData ml_result;
+                string mlUriString = Environment.GetEnvironmentVariable("AZTWITTERSAR_AI_URI");
+                HttpResponseMessage httpResponseMsg = null;
+
+                if (!(mlUriString is null))
+                {
+                    Uri mlFuncUri = new Uri(mlUriString);
+                    var payload = JsonConvert.SerializeObject(new { tweet = TweetText });
+                    var httpContent = new StringContent(payload, Encoding.UTF8, "application/json");
+
+                    log.LogInformation($"Calling ML-inference at {mlFuncUri.ToString()}.");
+                    httpResponseMsg = await httpClient.PostAsync(mlFuncUri, httpContent);
+                }
+                else
+                {
+                    log.LogInformation($"ML-inference link not configured.");
+                }
+
                 float ml_score = -1.0F;
                 string ml_version = "";
 
-                log.LogInformation("Calling ML-inference.");
-                HttpResponseMessage httpResponseMsg = await httpClient.PostAsync(ml_func_uri, httpContent);
-
-                if (httpResponseMsg.StatusCode == HttpStatusCode.OK && httpResponseMsg.Content != null)
+                if (!(mlUriString is null)
+                    && httpResponseMsg.StatusCode == HttpStatusCode.OK
+                    && httpResponseMsg.Content != null)
                 {
                     var responseContent = await httpResponseMsg.Content.ReadAsStringAsync();
 
-                    ml_result = JsonConvert.DeserializeObject<ResponseData>(responseContent);
+                    ResponseData ml_result = JsonConvert.DeserializeObject<ResponseData>(responseContent);
                     if (ml_result != null)
                     {
                         ml_score = ml_result.Score;
