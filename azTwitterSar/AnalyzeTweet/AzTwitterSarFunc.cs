@@ -82,7 +82,9 @@ namespace AzTwitterSar.ProcessTweets
             "rettelse", // rette
             "korskirke",
             "rossleitet", // leite
+            "paradisleitet",
             "korsrygg",
+            "kyskskreda",
         };
         // discard completely: "Trolltunga"
 
