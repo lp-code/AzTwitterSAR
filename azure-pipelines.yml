@@ -13,13 +13,37 @@ variables:
   # Function app name
   functionAppName: 'func-rkh-twittersar-dev'
 
+  # ARM template location
+  armTemplateLocation: 'https://raw.githubusercontent.com/lp-code/AzTwitterSAR/master/infrastructure/'
+
   # Agent VM image name
-  vmImageName: 'vs2017-win2016'
+  vmImageName: vs2017-win2016
 
   # Working Directory
   workingDirectory: '$(System.DefaultWorkingDirectory)/azTwitterSar'
 
 stages:
+- stage: CreateCloudResources
+  displayName: Create cloud resources
+
+  jobs:
+  - job: Create
+    displayName: Create
+    
+    steps:
+    - task: AzureResourceGroupDeployment@2
+      displayName: 'Deploy template'
+      inputs:
+        ConnectedServiceName: 'ConnectDevopsToAzure_rg-rkh-twittersarvestpd-dev'
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: 'rg-rkh-twittersarvestpd-dev'
+        location: 'norwayeast'
+        templateLocation: 'URL of the file'
+        csmFileLink: '$(armTemplateLocation)aztwittersar_template.json'
+        csmParametersFileLink: '$(armTemplateLocation)aztwittersar_parameters.json'
+        deploymentMode: 'Complete'
+        deploymentName: 'AzTwitterSAR-Pipeline'
+
 - stage: Build
   displayName: Build stage
 
