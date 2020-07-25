@@ -59,7 +59,7 @@ namespace AzTwitterSar.ProcessTweets
                 "alpin", "redningsgruppe",
                 //"fjell", too many false positives, 20181223 
                 "byfjell",
-                "evakuer",
+                // "evakuer", rarely relevant, and then there are always other trigger words
                 "turgåer",
                 "frivillige",
                 "forsv", // forsvunnet, forsvant
@@ -69,6 +69,8 @@ namespace AzTwitterSar.ProcessTweets
                 "iført",
                 // "observ", // try this when the AI negative filter is active
                 "hår", // in many descriptions
+                "skårfast",
+                "turfølge",
             };
 
         public static string[] irrelevantStrings = new string[] {
@@ -93,9 +95,14 @@ namespace AzTwitterSar.ProcessTweets
 
         public static string[] blacklistStrings = new string[]
         {
-            "narkoti", "hasj", "røyk", "tørrkoking", "brann ", // brannvesen er OK!!!
+            "narkoti", "hasj", 
+            "røyk", "tørrkoking", "brann ", "brenn", // brannvesen er OK!!!
             "innbrudd", "gjernings", "tyve", "pålegg",
             "håra", // place name in Hardanger
+            "trafikkulykke", "trafikkuhell",
+            "bevæpnet",
+            "kanin",
+            "stjål",
         };
 
         
@@ -173,7 +180,7 @@ namespace AzTwitterSar.ProcessTweets
                     slackMsg += $"@channel\n";
                 slackMsg +=
                     $"{highlightedText}\n"
-                    + $"Score (v2.0): {score.ToString("F", CultureInfo.InvariantCulture)}, "
+                    + $"Score (v2.1): {score.ToString("F", CultureInfo.InvariantCulture)}, "
                     + $"ML ({ml_version}): {ml_score.ToString("F", CultureInfo.InvariantCulture)}\n"
                     + $"Link: http://twitter.com/politivest/status/{TweetId}";
 
