@@ -3,10 +3,14 @@
 # Add steps that analyze code, save build artifacts, deploy, and more:
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/languages/dotnet-core
 
+# Replace "trigger" by "pr" for pull request building.
 trigger:
 - master
 
 variables:
+  # Build configuration setting
+  buildConfiguration: 'Release'
+
   # Azure Resource Manager connection created during pipeline creation
   azureSubscription: '45a6fef4-d860-401b-9ec2-7d6c0101f1f0'
 
@@ -23,8 +27,54 @@ variables:
   workingDirectory: '$(System.DefaultWorkingDirectory)/azTwitterSar'
 
 stages:
+- stage: Build
+  displayName: Build AzTwitterSAR, release configuration
+
+  jobs:
+  - job: Build
+    displayName: Build job
+    pool:
+      vmImage: $(vmImageName)
+
+    steps:
+    - task: DotNetCoreCLI@2
+      displayName: 'Restore project dependencies'
+      inputs:
+        command: 'restore'
+        projects: $(workingDirectory)/*.csproj
+
+    - task: DotNetCoreCLI@2
+      displayName: Build step dotnetcore
+      inputs:
+        command: 'build'
+        projects: |
+          $(workingDirectory)/*.csproj
+        arguments: --no-restore --configuration $(buildConfiguration)
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Publish the project - $(buildConfiguration)'
+      inputs:
+        command: 'publish'
+        projects: $(workingDirectory)/*.csproj
+        publishWebProjects: false
+        arguments: '--no-build --configuration $(buildConfiguration) --output $(System.DefaultWorkingDirectory)/$(buildConfiguration)'
+        zipAfterPublish: true
+
+    - task: ArchiveFiles@2
+      displayName: 'Archive files'
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/$(buildConfiguration)'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
+        replaceExistingArchive: true
+
+    - publish: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+      artifact: drop
+
 - stage: CreateCloudResources
   displayName: Create cloud resources
+  dependsOn: Build
 
   jobs:
   - job: Create
@@ -43,36 +93,6 @@ stages:
         csmParametersFileLink: '$(armTemplateLocation)aztwittersar_parameters.json'
         deploymentMode: 'Complete'
         deploymentName: 'AzTwitterSAR-Pipeline'
-
-- stage: Build
-  displayName: Build stage
-
-  jobs:
-  - job: Build
-    displayName: Build
-    pool:
-      vmImage: $(vmImageName)
-
-    steps:
-    - task: DotNetCoreCLI@2
-      displayName: Build
-      inputs:
-        command: 'build'
-        projects: |
-          $(workingDirectory)/*.csproj
-        arguments: --output $(System.DefaultWorkingDirectory)/publish_output --configuration Release
-
-    - task: ArchiveFiles@2
-      displayName: 'Archive files'
-      inputs:
-        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/publish_output'
-        includeRootFolder: false
-        archiveType: zip
-        archiveFile: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
-        replaceExistingArchive: true
-
-    - publish: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
-      artifact: drop
 
 - stage: Deploy
   displayName: Deploy stage
