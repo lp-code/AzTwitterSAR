@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProcessTweets2", "ProcessTw
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzTwitterSarUnittest", "AzTwitterSarUnittest\AzTwitterSarUnittest.csproj", "{61C1E3D7-DDA0-458F-A3ED-89812FD52B3A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DurablePoc", "DurablePoc\DurablePoc.csproj", "{2BB5EF89-50E7-467B-B886-DF55E63301E4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{61C1E3D7-DDA0-458F-A3ED-89812FD52B3A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{61C1E3D7-DDA0-458F-A3ED-89812FD52B3A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{61C1E3D7-DDA0-458F-A3ED-89812FD52B3A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2BB5EF89-50E7-467B-B886-DF55E63301E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2BB5EF89-50E7-467B-B886-DF55E63301E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2BB5EF89-50E7-467B-B886-DF55E63301E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2BB5EF89-50E7-467B-B886-DF55E63301E4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
