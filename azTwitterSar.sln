@@ -7,9 +7,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzTwitterSar", "azTwitterSa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProcessTweets2", "ProcessTweets2\ProcessTweets2.csproj", "{26B537DA-F5BD-4506-9EBF-0F521600F1DB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzTwitterSarUnittest", "AzTwitterSarUnittest\AzTwitterSarUnittest.csproj", "{61C1E3D7-DDA0-458F-A3ED-89812FD52B3A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzTwitterSarUnittest", "AzTwitterSarUnittest\AzTwitterSarUnittest.csproj", "{61C1E3D7-DDA0-458F-A3ED-89812FD52B3A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DurablePoc", "DurablePoc\DurablePoc.csproj", "{2BB5EF89-50E7-467B-B886-DF55E63301E4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DurablePoc", "DurablePoc\DurablePoc.csproj", "{2BB5EF89-50E7-467B-B886-DF55E63301E4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F905CBA8-D5B2-45A7-8E24-C2AB5789056F} = {F905CBA8-D5B2-45A7-8E24-C2AB5789056F}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

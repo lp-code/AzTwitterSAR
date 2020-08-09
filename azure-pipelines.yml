@@ -102,7 +102,7 @@ stages:
   jobs:
   - deployment: Deploy
     displayName: Deploy
-    environment: 'development'
+    environment: dev
     pool:
       vmImage: $(vmImageName)
 

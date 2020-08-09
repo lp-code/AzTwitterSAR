@@ -31,6 +31,9 @@ namespace DurablePoc
         [JsonProperty("textWithoutTags")]
         public string TextWithoutTags { get; set; }
 
+        [JsonProperty("textWithoutTagsHighlighted")]
+        public string TextWithoutTagsHighlighted { get; set; }
+
         [JsonProperty("label")]
         public int Label { get; set; }
 

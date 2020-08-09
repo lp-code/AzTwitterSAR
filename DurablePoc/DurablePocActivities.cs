@@ -1,12 +1,11 @@
+using AzTwitterSar.ProcessTweets;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using System;
 using System.Linq;
 using Tweetinvi;
-using Tweetinvi.Models;
 using Tweetinvi.Parameters;
-using Dynamitey.DynamicObjects;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Text;
@@ -79,12 +78,14 @@ namespace DurablePoc
             return tpds;
         }
 
-        //[FunctionName("A_GetBusinessLogicScore")]
-        //public static string GetBusinessLogicScore([ActivityTrigger] string name, ILogger log)
-        //{
-        //    log.LogInformation($"Saying hello to {name}.");
-        //    return $"Hello {name}!";
-        //}
+        [FunctionName("A_GetBusinessLogicScore")]
+        public static Tuple<float, string> GetBusinessLogicScore([ActivityTrigger] string textWithoutTags, ILogger log)
+        {
+            log.LogInformation($"Getting BusinessLogicScore.");
+            string highlightedText;
+            float score = AzTwitterSarFunc.ScoreTweet(textWithoutTags, out highlightedText);
+            return new Tuple<float, string>(score, highlightedText);
+        }
 
         //[FunctionName("A_GetAiScore")]
         //public static string GetAiScore([ActivityTrigger] string name, ILogger log)

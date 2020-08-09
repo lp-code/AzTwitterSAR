@@ -40,7 +40,7 @@ namespace DurablePoc
                 if (!context.IsReplaying)
                     log.LogDebug("Call sub-orchestration: P_ProcessTweet for tweet: ");
                 Task<TweetProcessingData> processTask = context.CallSubOrchestratorAsync<TweetProcessingData>(
-                    "P_ProcessTweet", new TweetAndLogger { tpd = tpd, log = log });
+                    "P_ProcessTweet", tpd);
                 parallelTasks.Add(processTask);
             }
             await Task.WhenAll(parallelTasks);
@@ -62,15 +62,15 @@ namespace DurablePoc
             [OrchestrationTrigger] IDurableOrchestrationContext context,
             ILogger log)
         {
-            ITweet tweet = context.GetInput<ITweet>();
+            TweetProcessingData tpd = context.GetInput<TweetProcessingData>();
 
             if (!context.IsReplaying)
                 log.LogDebug("About to call A_SplitGeoAndMessage");
 
-            Tuple<List<string>, string> geoAndText = await
-                context.CallActivityAsync<Tuple<List<string>, string>>("A_SplitTagsAndMessage", tweet);
+            (tpd.ScoreBL, tpd.TextWithoutTagsHighlighted) = await
+                context.CallActivityAsync<Tuple<float, string>>("A_GetBusinessLogicScore", tpd.TextWithoutTags);
 
-            return new TweetProcessingData();
+            return tpd;
         }
     }
 }
