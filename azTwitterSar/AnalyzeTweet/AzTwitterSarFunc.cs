@@ -192,7 +192,7 @@ namespace AzTwitterSar.ProcessTweets
             return Tuple.Create(score, ml_score);
         }
 
-        private static float GetScoreFromEnv(string envVarName,
+        public static float GetScoreFromEnv(string envVarName,
             ILogger log, float defaultScore)
         {
             float score = defaultScore;

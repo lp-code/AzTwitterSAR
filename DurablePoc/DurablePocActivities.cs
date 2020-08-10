@@ -10,9 +10,20 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Text;
 using Tweetinvi.Models.Entities;
+using System.Net.Http;
+using Newtonsoft.Json;
+using System.Net;
 
 namespace DurablePoc
 {
+    public class EnvVars
+    {
+        public float MinScoreBL { get; set; }
+        public float MinScoreBLAlert { get; set; }
+        public string MlUriString { get; set; }
+        public string SlackWebHook { get; set; }
+    }
+
     public static class DurablePocActivities
     {
         private static string removeHashtagsFromText(string FullText, List<IHashtagEntity> Hashtags)
@@ -87,12 +98,47 @@ namespace DurablePoc
             return new Tuple<float, string>(score, highlightedText);
         }
 
-        //[FunctionName("A_GetAiScore")]
-        //public static string GetAiScore([ActivityTrigger] string name, ILogger log)
-        //{
-        //    log.LogInformation($"Saying hello to {name}.");
-        //    return $"Hello {name}!";
-        //}
+        [FunctionName("A_GetEnvVars")]
+        public static EnvVars GetEnvVars([ActivityTrigger] string _, ILogger log)
+        {
+            log.LogInformation($"Getting environment variable values.");
+            return new EnvVars
+            {
+                MinScoreBL = AzTwitterSarFunc.GetScoreFromEnv("AZTWITTERSAR_MINSCORE", log, 0.01f),
+                MinScoreBLAlert = AzTwitterSarFunc.GetScoreFromEnv("AZTWITTERSAR_MINSCORE_ALERT", log, 0.1f),
+                
+                SlackWebHook = Environment.GetEnvironmentVariable("AZTWITTERSAR_SLACKHOOK")
+            };
+        }
+
+
+        [FunctionName("A_GetMlScore")]
+        public static async Task<Tuple<float, int, string>> GetMlScore([ActivityTrigger] string tweet, ILogger log)
+        {
+            log.LogInformation($"Getting ML score.");
+            string mlUriString = Environment.GetEnvironmentVariable("AZTWITTERSAR_AI_URI");
+            
+            var payload = JsonConvert.SerializeObject(new { tweet = tweet });
+            var httpContent = new StringContent(payload, Encoding.UTF8, "application/json");
+
+            HttpClient httpClient = new HttpClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(30);
+            Uri mlFuncUri = new Uri(mlUriString);
+
+            log.LogInformation($"Calling ML-inference at {mlFuncUri.ToString()}.");
+            HttpResponseMessage httpResponseMsg = await httpClient.PostAsync(mlFuncUri, httpContent);
+
+            if (!(mlUriString is null)
+                && httpResponseMsg.StatusCode == HttpStatusCode.OK
+                && httpResponseMsg.Content != null)
+            {
+                var responseContent = await httpResponseMsg.Content.ReadAsStringAsync();
+                ResponseData ml_result = JsonConvert.DeserializeObject<ResponseData>(responseContent);
+
+                return new Tuple<float, int, string>(ml_result.Score, ml_result.Label, ml_result.Version);
+            }
+            return new Tuple<float, int, string>(0, 0, null);
+        }
 
         //[FunctionName("A_GetGeoLocation")]
         //public static string GetGeoLocation([ActivityTrigger] string name, ILogger log)
