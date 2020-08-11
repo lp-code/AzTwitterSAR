@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DurablePoc
@@ -48,14 +49,24 @@ namespace DurablePoc
             {
                 int res = await context.CallActivityAsync<int>("A_PublishTweets", publishList);
             }
+
             // 3) Log tweets to table storage and send to output those that were selected.
 
             // need to order the output from the loop above according to tweet id
 
             //await Task.WhenAll(parallelTasks);
 
-            lastTweetId = "xxx";
-            return lastTweetId;
+
+            int delaySeconds = await context.CallActivityAsync<int>("A_GetDelaySeconds", null);
+
+            if (delaySeconds > 0)
+            {
+                DateTime nextTime = context.CurrentUtcDateTime.AddSeconds(delaySeconds);
+                await context.CreateTimer(nextTime, CancellationToken.None);
+                context.ContinueAsNew(null);
+            }
+
+            return lastTweetId;  // Should be last id of _all_ new tweets (to be prepared for logging, too).
         }
 
         [FunctionName("P_ProcessTweet")]
@@ -96,18 +107,13 @@ namespace DurablePoc
                             $"ML-inference OK, label: {tpd.Label}, "
                             + $"score: {tpd.ScoreML.ToString("F", CultureInfo.InvariantCulture)}, "
                             + $"version: {tpd.VersionML}");
-                        if (tpd.Label == 0)
-                        {
-                            // When the ML filter says "no" then we return without posting to Slack.
-                            // To mark this type of result, we return the negative of the "manual" score.
-                            tpd.ScoreBL = -tpd.ScoreBL;
-                        }
                     }
                     else
                     {
-                        // We did not get a reply from the ML function, therefore
+                        // Did not get a reply from the ML function, therefore
                         // we fall back and continue according to the traditional
                         // logic's result.
+                        tpd.Label = null;
                         log.LogInformation("ML inference failed or did not reply, rely on conventional logic.");
                     }
                 } // if (tpd.ScoreBL > envVars.MinScoreBL)

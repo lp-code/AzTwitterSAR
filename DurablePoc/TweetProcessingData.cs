@@ -7,6 +7,10 @@ namespace DurablePoc
 {
     public class TweetProcessingData
     {
+        public TweetProcessingData()
+        {
+
+        }
         // Tweetinvi ITweet data members.
         [JsonProperty("idStr")]
         public string IdStr { get; set; }
@@ -35,7 +39,7 @@ namespace DurablePoc
         public string TextWithoutTagsHighlighted { get; set; }
 
         [JsonProperty("label")]
-        public int Label { get; set; }
+        public int? Label { get; set; }
 
         [JsonProperty("scoreBL")]
         public float ScoreBL { get; set; }

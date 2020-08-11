@@ -166,6 +166,15 @@ namespace DurablePoc
             return 0;
         }
 
+        [FunctionName("A_GetDelaySeconds")]
+        public static int GetDelaySeconds([ActivityTrigger] int _, ILogger log)
+        {
+            bool active = Int32.Parse(Environment.GetEnvironmentVariable("AZTWITTERSAR_ACTIVE")) == 1;
+            if (active)
+                return 60;
+            else
+                return 0;
+        }
         //[FunctionName("A_GetGeoLocation")]
         //public static string GetGeoLocation([ActivityTrigger] string name, ILogger log)
         //{
