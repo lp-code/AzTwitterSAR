@@ -13,6 +13,7 @@ using Tweetinvi.Models.Entities;
 using System.Net.Http;
 using Newtonsoft.Json;
 using System.Net;
+using System.Globalization;
 
 namespace DurablePoc
 {
@@ -140,6 +141,31 @@ namespace DurablePoc
             return new Tuple<float, int, string>(0, 0, null);
         }
 
+        [FunctionName("A_PublishTweets")]
+        public static async Task<int> PublishTweets([ActivityTrigger] List<TweetProcessingData> tpds, ILogger log)
+        {
+            log.LogInformation($"Publishing {tpds.Count} tweets.");
+
+            float minScoreBLAlert = AzTwitterSarFunc.GetScoreFromEnv("AZTWITTERSAR_MINSCORE_ALERT", log, 0.1f);
+            foreach (var tpd in tpds)
+            {
+                string slackMsg = "";
+                if (tpd.ScoreBL > minScoreBLAlert)
+                    slackMsg += $"@channel\n";
+                slackMsg +=
+                    $"{tpd.FullText}\n"
+                    + $"Score (v3.0): {tpd.ScoreBL.ToString("F", CultureInfo.InvariantCulture)}, "
+                    + $"ML ({tpd.VersionML}): {tpd.ScoreML.ToString("F", CultureInfo.InvariantCulture)}\n"
+                    + $"Link: http://twitter.com/politivest/status/{tpd.IdStr}";
+
+                log.LogInformation($"Message: {slackMsg}");
+                int sendResult = AzTwitterSarFunc.PostSlackMessage(log, slackMsg);
+                log.LogInformation($"Message posted to slack, result: {sendResult}");
+            }
+            log.LogInformation($"Finished publishing tweets.");
+            return 0;
+        }
+
         //[FunctionName("A_GetGeoLocation")]
         //public static string GetGeoLocation([ActivityTrigger] string name, ILogger log)
         //{
@@ -153,13 +179,5 @@ namespace DurablePoc
         //    log.LogInformation($"Saying hello to {name}.");
         //    return $"Hello {name}!";
         //}
-
-        //[FunctionName("A_PostAlert")]
-        //public static string PostAlert([ActivityTrigger] string name, ILogger log)
-        //{
-        //    log.LogInformation($"Saying hello to {name}.");
-        //    return $"Hello {name}!";
-        //}
-
     }
 }

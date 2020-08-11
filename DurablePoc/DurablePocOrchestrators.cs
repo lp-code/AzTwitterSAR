@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace DurablePoc
@@ -37,8 +38,16 @@ namespace DurablePoc
             }
             await Task.WhenAll(parallelTasks);
 
-            //.OrderBy(tweet => tweet.Id);
+            // Find the tweets that shall be published and order them chronologically.
+            List<TweetProcessingData> publishList = (from pt in parallelTasks
+                                                     where pt.Result.Label == 1
+                                                     orderby Int64.Parse(pt.Result.IdStr)
+                                                     select pt.Result).ToList();
 
+            if (publishList.Count > 0)
+            {
+                int res = await context.CallActivityAsync<int>("A_PublishTweets", publishList);
+            }
             // 3) Log tweets to table storage and send to output those that were selected.
 
             // need to order the output from the loop above according to tweet id
@@ -101,22 +110,6 @@ namespace DurablePoc
                         // logic's result.
                         log.LogInformation("ML inference failed or did not reply, rely on conventional logic.");
                     }
-
-                    // THE POSTNG SHOULD GO INTO ITS OWN STAGE FROM THE MAIN ORCHESTRATOR.
-
-                    // @todo The ML result has more than the label, should use e.g. the geographical tags, too.
-                    string slackMsg = "";
-                    if (tpd.ScoreBL > envVars.MinScoreBLAlert)
-                        slackMsg += $"@channel\n";
-                    slackMsg +=
-                        $"{tpd.FullText}\n"
-                        + $"Score (v3.0): {tpd.ScoreBL.ToString("F", CultureInfo.InvariantCulture)}, "
-                        + $"ML ({tpd.VersionML}): {tpd.ScoreML.ToString("F", CultureInfo.InvariantCulture)}\n"
-                        + $"Link: http://twitter.com/politivest/status/{tpd.IdStr}";
-
-                    log.LogInformation($"Message: {slackMsg}");
-                    int sendResult = PostSlackMessage(log, slackMsg);
-                    log.LogInformation($"Message posted to slack, result: {sendResult}");
                 } // if (tpd.ScoreBL > envVars.MinScoreBL)
             } // if (tpd.ScoreBL > 0)
 
