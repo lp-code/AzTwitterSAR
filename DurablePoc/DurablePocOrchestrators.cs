@@ -89,15 +89,15 @@ namespace DurablePoc
                 log.LogDebug("Call A_GetBusinessLogicScore");
 
             // The following function is not async, so it could be called directly rather than through the activity model.
-            (tpd.ScoreBL, tpd.TextWithoutTagsHighlighted) = await
+            (tpd.Score, tpd.TextWithoutTagsHighlighted) = await
                 context.CallActivityAsync<Tuple<float, string>>("A_GetBusinessLogicScore", tpd.TextWithoutTags);
 
-            if (tpd.ScoreBL > 0)
+            if (tpd.Score > 0)
             {
                 // Getting environment variables is not permitted in an orchestrator.
                 EnvVars envVars = await context.CallActivityAsync<EnvVars>("A_GetEnvVars", null);
 
-                if (tpd.ScoreBL > envVars.MinScoreBL)
+                if (tpd.Score > envVars.MinScoreBL)
                 {
                     log.LogInformation("Minimum score exceeded, query ML filter.");
                     tpd.Label = 2; // Since the main orchestrator does not have the minScore we have to indicate

@@ -41,8 +41,8 @@ namespace DurablePoc
         [JsonProperty("label")]
         public int? Label { get; set; }
 
-        [JsonProperty("scoreBL")]
-        public float ScoreBL { get; set; }
+        [JsonProperty("score")]
+        public float Score { get; set; }
 
         [JsonProperty("scoreML")]
         public float ScoreML { get; set; }

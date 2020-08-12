@@ -152,11 +152,11 @@ namespace DurablePoc
             foreach (var tpd in tpds)
             {
                 string slackMsg = "";
-                if (tpd.ScoreBL > minScoreBLAlert)
+                if (tpd.Score > minScoreBLAlert)
                     slackMsg += $"@channel\n";
                 slackMsg +=
                     $"{tpd.FullText}\n"
-                    + $"Score (v3.0): {tpd.ScoreBL.ToString("F", CultureInfo.InvariantCulture)}, "
+                    + $"Score (v3.0): {tpd.Score.ToString("F", CultureInfo.InvariantCulture)}, "
                     + $"ML ({tpd.VersionML}): {tpd.ScoreML.ToString("F", CultureInfo.InvariantCulture)}\n"
                     + $"Link: http://twitter.com/politivest/status/{tpd.IdStr}";
 
