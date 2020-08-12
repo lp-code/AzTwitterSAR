@@ -1,4 +1,6 @@
+# nullable enable
 using AzTwitterSar.ProcessTweets;
+using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
@@ -167,7 +169,7 @@ namespace DurablePoc
         }
 
         [FunctionName("A_GetDelaySeconds")]
-        public static int GetDelaySeconds([ActivityTrigger] int _, ILogger log)
+        public static int GetDelaySeconds([ActivityTrigger] DateTime now, ILogger log)
         {
             bool active = Int32.Parse(Environment.GetEnvironmentVariable("AZTWITTERSAR_ACTIVE")) == 1;
             if (active)
@@ -182,11 +184,51 @@ namespace DurablePoc
         //    return $"Hello {name}!";
         //}
 
-        //[FunctionName("A_LogToTable")]
-        //public static string LogToTable([ActivityTrigger] string name, ILogger log)
-        //{
-        //    log.LogInformation($"Saying hello to {name}.");
-        //    return $"Hello {name}!";
-        //}
+        [FunctionName("A_LogTweets")]
+        public static async Task<int> LogTweets([ActivityTrigger] List<TweetProcessingData> tpds, ILogger log)
+        {
+            log.LogInformation($"Logging tweets to table storage.");
+            // The data structure and content is quite different from the previous
+            // version's, so the storing is reimplemented here.
+            string storageAccountConnectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
+
+            CloudTable? cloudTable = null;
+
+            if (CloudStorageAccount.TryParse(storageAccountConnectionString, out CloudStorageAccount storageAccount))
+            {
+                // If the connection string is valid, proceed with operations against table
+                // storage here.
+                CloudTableClient cloudTableClient = storageAccount.CreateCloudTableClient(new TableClientConfiguration());
+
+                cloudTable = cloudTableClient.GetTableReference("TweetTable");
+                await cloudTable.CreateIfNotExistsAsync();
+            }
+            else
+            {
+                log.LogError("No valid connection string for the LogTweets activity " +
+                    "in the environment variables.");
+            }
+
+            if (cloudTable != null)
+            {
+                try
+                {
+                    AnalyzedTweetEntity entity = new AnalyzedTweetEntity(tweet, scores);
+
+                    // Create the InsertOrReplace table operation
+                    TableOperation insertOrMergeOperation = TableOperation.InsertOrMerge(entity);
+
+                    // Execute the operation.
+                    TableResult result = await cloudTable.ExecuteAsync(insertOrMergeOperation);
+                    log.LogInformation($"Saved tweet to table, return code: {result.HttpStatusCode.ToString()}");
+                }
+                catch (StorageException e)
+                {
+                    log.LogError(e.Message);
+                    throw;
+                }
+            }
+            return 0;
+        }
     }
 }

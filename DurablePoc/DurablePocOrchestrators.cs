@@ -28,45 +28,54 @@ namespace DurablePoc
             List<TweetProcessingData> tweetData = await context.CallActivityAsync<List<TweetProcessingData>>("A_GetTweets", lastTweetId);
 
             // 2) Process to find interesting ones.
-            var parallelTasks = new List<Task<TweetProcessingData>>();
+            var parallelScoringTasks = new List<Task<TweetProcessingData>>();
             foreach (var tpd in tweetData) // processes in order
             {
                 if (!context.IsReplaying)
                     log.LogDebug("Call sub-orchestration: P_ProcessTweet for tweet: ");
                 Task<TweetProcessingData> processTask = context.CallSubOrchestratorAsync<TweetProcessingData>(
                     "P_ProcessTweet", tpd);
-                parallelTasks.Add(processTask);
+                parallelScoringTasks.Add(processTask);
             }
-            await Task.WhenAll(parallelTasks);
+            await Task.WhenAll(parallelScoringTasks);
 
-            // Find the tweets that shall be published and order them chronologically.
-            List<TweetProcessingData> publishList = (from pt in parallelTasks
-                                                     where pt.Result.Label == 1
-                                                     orderby Int64.Parse(pt.Result.IdStr)
-                                                     select pt.Result).ToList();
+            // Sort the list of analyzed tweets by ascending id (chronologically).
+            List<TweetProcessingData> logList = (from pt in parallelScoringTasks
+                                                 orderby Int64.Parse(pt.Result.IdStr)
+                                                 select pt.Result).ToList();
 
-            if (publishList.Count > 0)
+            // Find the tweets that shall be published, chronological order.
+            List<TweetProcessingData> publishList = (
+                from tpd in logList
+                where (tpd.Label == 1 || (tpd.Label == 2 && tpd.VersionML is null))
+                orderby Int64.Parse(tpd.IdStr)
+                select tpd).ToList();
             {
-                int res = await context.CallActivityAsync<int>("A_PublishTweets", publishList);
+                List<Task<int>> parallelPostprocessingTasks = new List<Task<int>>();
+                if (publishList.Count > 0)
+                {
+                    parallelPostprocessingTasks.Add(context.CallActivityAsync<int>("A_PublishTweets", publishList));
+                }
+                if (logList.Count > 0)
+                {
+                    parallelPostprocessingTasks.Add(context.CallActivityAsync<int>("A_LogTweets", logList));
+                }
+                await Task.WhenAll(parallelPostprocessingTasks);
             }
 
-            // 3) Log tweets to table storage and send to output those that were selected.
+            // If there have been any tweets then we update the last seen id, which is passed to the next call.
+            if (logList.Count > 0)
+                lastTweetId = logList[logList.Count - 1].IdStr;
 
-            // need to order the output from the loop above according to tweet id
-
-            //await Task.WhenAll(parallelTasks);
-
-
-            int delaySeconds = await context.CallActivityAsync<int>("A_GetDelaySeconds", null);
-
+            int delaySeconds = await context.CallActivityAsync<int>("A_GetDelaySeconds", context.CurrentUtcDateTime);
             if (delaySeconds > 0)
             {
                 DateTime nextTime = context.CurrentUtcDateTime.AddSeconds(delaySeconds);
                 await context.CreateTimer(nextTime, CancellationToken.None);
-                context.ContinueAsNew(null);
+                context.ContinueAsNew(lastTweetId);
             }
 
-            return lastTweetId;  // Should be last id of _all_ new tweets (to be prepared for logging, too).
+            return lastTweetId;
         }
 
         [FunctionName("P_ProcessTweet")]
@@ -87,11 +96,12 @@ namespace DurablePoc
             {
                 // Getting environment variables is not permitted in an orchestrator.
                 EnvVars envVars = await context.CallActivityAsync<EnvVars>("A_GetEnvVars", null);
-                float ml_score = -1.0F;
+
                 if (tpd.ScoreBL > envVars.MinScoreBL)
                 {
                     log.LogInformation("Minimum score exceeded, query ML filter.");
-
+                    tpd.Label = 2; // Since the main orchestrator does not have the minScore we have to indicate
+                                   // whether the BL has indicated posting (in case ML is not working).
                     if (!(envVars.MlUriString is null))
                     {
                         (tpd.ScoreML, tpd.Label, tpd.VersionML) = await context.CallActivityAsync<Tuple<float, int, string>>("A_GetMlScore", tpd.TextWithoutTags);
@@ -112,8 +122,7 @@ namespace DurablePoc
                     {
                         // Did not get a reply from the ML function, therefore
                         // we fall back and continue according to the traditional
-                        // logic's result.
-                        tpd.Label = null;
+                        // logic's result; indicated by tpd.VersionML is null.
                         log.LogInformation("ML inference failed or did not reply, rely on conventional logic.");
                     }
                 } // if (tpd.ScoreBL > envVars.MinScoreBL)
