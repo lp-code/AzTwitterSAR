@@ -27,6 +27,7 @@ namespace DurablePoc
         public string SlackWebHook { get; set; }
     }
 
+
     public static class DurablePocActivities
     {
         private static string removeHashtagsFromText(string FullText, List<IHashtagEntity> Hashtags)
@@ -102,7 +103,7 @@ namespace DurablePoc
         }
 
         [FunctionName("A_GetEnvVars")]
-        public static EnvVars GetEnvVars([ActivityTrigger] string _, ILogger log)
+        public static EnvVars GetEnvVars([ActivityTrigger] string nothing, ILogger log)
         {
             log.LogInformation($"Getting environment variable values.");
             return new EnvVars
@@ -177,12 +178,6 @@ namespace DurablePoc
             else
                 return 0;
         }
-        //[FunctionName("A_GetGeoLocation")]
-        //public static string GetGeoLocation([ActivityTrigger] string name, ILogger log)
-        //{
-        //    log.LogInformation($"Saying hello to {name}.");
-        //    return $"Hello {name}!";
-        //}
 
         [FunctionName("A_LogTweets")]
         public static async Task<int> LogTweets([ActivityTrigger] List<TweetProcessingData> tpds, ILogger log)
@@ -200,7 +195,7 @@ namespace DurablePoc
                 // storage here.
                 CloudTableClient cloudTableClient = storageAccount.CreateCloudTableClient(new TableClientConfiguration());
 
-                cloudTable = cloudTableClient.GetTableReference("TweetTable");
+                cloudTable = cloudTableClient.GetTableReference("TweetTable2");
                 await cloudTable.CreateIfNotExistsAsync();
             }
             else
@@ -213,14 +208,15 @@ namespace DurablePoc
             {
                 try
                 {
-                    AnalyzedTweetEntity entity = new AnalyzedTweetEntity(tweet, scores);
+                    foreach (TweetProcessingData tpd in tpds)
+                    {
+                        // Create the InsertOrReplace table operation
+                        TableOperation insertOrMergeOperation = TableOperation.InsertOrMerge(tpd);
 
-                    // Create the InsertOrReplace table operation
-                    TableOperation insertOrMergeOperation = TableOperation.InsertOrMerge(entity);
-
-                    // Execute the operation.
-                    TableResult result = await cloudTable.ExecuteAsync(insertOrMergeOperation);
-                    log.LogInformation($"Saved tweet to table, return code: {result.HttpStatusCode.ToString()}");
+                        // Execute the operation.
+                        TableResult result = await cloudTable.ExecuteAsync(insertOrMergeOperation);
+                        log.LogInformation($"Saved tweet to table, return code: {result.HttpStatusCode.ToString()}");
+                    }
                 }
                 catch (StorageException e)
                 {

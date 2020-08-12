@@ -1,16 +1,22 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Azure.Cosmos.Table;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace DurablePoc
 {
-    public class TweetProcessingData
+    // This class can both be JSON-serialized for passing into/out of activities,
+    // and it is a TableEntity, so it can be written to Azure Table storage.
+    public class TweetProcessingData : TableEntity
     {
         public TweetProcessingData()
-        {
+        { }
 
-        }
+        // TableEntity members -- override with sensible values
+        public new string PartitionKey => CreatedAt.Year.ToString();
+        public new string RowKey => IdStr;
+
         // Tweetinvi ITweet data members.
         [JsonProperty("idStr")]
         public string IdStr { get; set; }
