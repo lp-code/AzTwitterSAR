@@ -218,9 +218,9 @@ namespace DurablePoc
                         log.LogInformation($"Saved tweet to table, return code: {result.HttpStatusCode.ToString()}");
                     }
                 }
-                catch (StorageException e)
+                catch (Exception e)
                 {
-                    log.LogError(e.Message);
+                    log.LogError($"Saving tweet to table failed: {e.Message}");
                     throw;
                 }
             }

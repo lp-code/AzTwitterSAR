@@ -10,19 +10,34 @@ namespace DurablePoc
     // and it is a TableEntity, so it can be written to Azure Table storage.
     public class TweetProcessingData : TableEntity
     {
-        public TweetProcessingData()
-        { }
+        private string _idStr;
+        private DateTime _createdAt;
 
-        // TableEntity members -- override with sensible values
-        public new string PartitionKey => CreatedAt.Year.ToString();
-        public new string RowKey => IdStr;
+        public TweetProcessingData()
+        {}
 
         // Tweetinvi ITweet data members.
         [JsonProperty("idStr")]
-        public string IdStr { get; set; }
+        public string IdStr
+        {
+            get => _idStr;
+            set
+            {
+                _idStr = value;
+                base.RowKey = _idStr;
+            }
+        }
 
         [JsonProperty("createdAt")]
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt
+        {
+            get => _createdAt;
+            set
+            {
+                _createdAt = value;
+                base.PartitionKey = CreatedAt.Year.ToString();
+            }
+        }
 
         [JsonProperty("fullText")]
         public string FullText { get; set; }
