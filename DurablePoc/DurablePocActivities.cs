@@ -170,11 +170,22 @@ namespace DurablePoc
         }
 
         [FunctionName("A_GetDelaySeconds")]
-        public static int GetDelaySeconds([ActivityTrigger] DateTime now, ILogger log)
+        public static int GetDelaySeconds([ActivityTrigger] Tuple<DateTime, DateTime> datetimes, ILogger log)
         {
-            bool active = Int32.Parse(Environment.GetEnvironmentVariable("AZTWITTERSAR_ACTIVE")) == 1;
+            DateTime startTime = datetimes.Item1;
+            DateTime currentTime = datetimes.Item2;
+
+            const int targetSecondsBetweenRuns = 60;
+            const int minimumSecondsBetweenRuns = 30;
+
+
+            bool envVarSet = Int32.TryParse(Environment.GetEnvironmentVariable("AZTWITTERSAR_ACTIVE"), out int envVarValue);
+            bool active = envVarSet && (envVarValue == 1);
+            
             if (active)
-                return 60;
+                return Math.Max(
+                    targetSecondsBetweenRuns - (int) (currentTime - startTime).TotalSeconds, 
+                    minimumSecondsBetweenRuns);
             else
                 return 0;
         }

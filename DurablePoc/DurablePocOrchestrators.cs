@@ -19,58 +19,85 @@ namespace DurablePoc
             [OrchestrationTrigger] IDurableOrchestrationContext context,
             ILogger log)
         {
+            DateTime startTime = context.CurrentUtcDateTime;
+            if (!context.IsReplaying)
+                log.LogInformation($"Main orchestrator, start time {startTime}. Call activity: GetTweets");
+
             string lastTweetId = context.GetInput<string>();
 
-            if (!context.IsReplaying)
-                log.LogDebug("Call activity: GetTweets");
-
             // 1) Get tweets from Twitter API
-            List<TweetProcessingData> tweetData = await context.CallActivityAsync<List<TweetProcessingData>>("A_GetTweets", lastTweetId);
+            List<TweetProcessingData> tweetData = await context.CallActivityAsync<List<TweetProcessingData>>(
+                "A_GetTweets", lastTweetId);
 
-            // 2) Process to find interesting ones.
-            var parallelScoringTasks = new List<Task<TweetProcessingData>>();
-            foreach (var tpd in tweetData) // processes in order
+            // The most likely case is that there are NO new tweets, so we provide
+            // the short circuit which skips all the processing in this block, and
+            // thus avoids a lot of replaying by the durable function mechanism.
+            if (tweetData.Count > 0)
             {
                 if (!context.IsReplaying)
-                    log.LogDebug("Call sub-orchestration: P_ProcessTweet for tweet: ");
-                Task<TweetProcessingData> processTask = context.CallSubOrchestratorAsync<TweetProcessingData>(
-                    "P_ProcessTweet", tpd);
-                parallelScoringTasks.Add(processTask);
-            }
-            await Task.WhenAll(parallelScoringTasks);
+                    log.LogInformation($"Got {tweetData.Count} new tweets; enter processing sub-orchestration.");
 
-            // Sort the list of analyzed tweets by ascending id (chronologically).
-            List<TweetProcessingData> logList = (from pt in parallelScoringTasks
-                                                 orderby Int64.Parse(pt.Result.IdStr)
-                                                 select pt.Result).ToList();
-
-            // Find the tweets that shall be published, chronological order.
-            List<TweetProcessingData> publishList = (
-                from tpd in logList
-                where (tpd.Label == 1 || (tpd.Label == 2 && tpd.VersionML is null))
-                orderby Int64.Parse(tpd.IdStr)
-                select tpd).ToList();
-            {
-                List<Task<int>> parallelPostprocessingTasks = new List<Task<int>>();
-                if (publishList.Count > 0)
+                // 2) Process tweets one by one to find interesting ones.
+                var parallelScoringTasks = new List<Task<TweetProcessingData>>();
+                foreach (var tpd in tweetData) // processes in order
                 {
-                    parallelPostprocessingTasks.Add(context.CallActivityAsync<int>("A_PublishTweets", publishList));
+                    if (!context.IsReplaying)
+                        log.LogInformation($"Call sub-orchestration: P_ProcessTweet for tweet: {tpd.IdStr}");
+                    Task<TweetProcessingData> processTask = context.CallSubOrchestratorAsync<TweetProcessingData>(
+                        "P_ProcessTweet", tpd);
+                    parallelScoringTasks.Add(processTask);
                 }
-                if (logList.Count > 0)
+                await Task.WhenAll(parallelScoringTasks);
+
+                // Sort the list of analyzed tweets by ascending id (chronologically).
+                List<TweetProcessingData> logList = (from pt in parallelScoringTasks
+                                                     orderby Int64.Parse(pt.Result.IdStr)
+                                                     select pt.Result).ToList();
+
+                // Find the tweets that shall be published, chronological order.
+                List<TweetProcessingData> publishList = (
+                    from tpd in logList
+                    where (tpd.Label == 1 || (tpd.Label == 2 && tpd.VersionML is null))
+                    orderby Int64.Parse(tpd.IdStr)
+                    select tpd).ToList();
+
+                // Parallel section for postprocessing tasks.
                 {
+                    if (!context.IsReplaying)
+                        log.LogInformation($"Publishing {publishList.Count} tweets; logging {logList.Count} tweets.");
+
+                    List<Task<int>> parallelPostprocessingTasks = new List<Task<int>>();
+                    // We know there is something in the log list, but publishing we
+                    // trigger only if there is something to do for this activity.
+                    if (publishList.Count > 0)
+                    {
+                        parallelPostprocessingTasks.Add(context.CallActivityAsync<int>("A_PublishTweets", publishList));
+                    }
                     parallelPostprocessingTasks.Add(context.CallActivityAsync<int>("A_LogTweets", logList));
+                    await Task.WhenAll(parallelPostprocessingTasks);
                 }
-                await Task.WhenAll(parallelPostprocessingTasks);
+
+                // We know there has been >= 1 tweet, so we update the last seen id,
+                // which is passed to the next call.
+                lastTweetId = logList[logList.Count - 1].IdStr;
+            }
+            else
+            {
+                if (!context.IsReplaying)
+                    log.LogInformation($"Got no new tweets.");
             }
 
-            // If there have been any tweets then we update the last seen id, which is passed to the next call.
-            if (logList.Count > 0)
-                lastTweetId = logList[logList.Count - 1].IdStr;
+            DateTime currentTime = context.CurrentUtcDateTime;
+            int delaySeconds = await context.CallActivityAsync<int>(
+                "A_GetDelaySeconds", new Tuple<DateTime, DateTime>(startTime, currentTime));
 
-            int delaySeconds = await context.CallActivityAsync<int>("A_GetDelaySeconds", context.CurrentUtcDateTime);
+            if (!context.IsReplaying)
+                log.LogInformation($"Determined delay: {delaySeconds} seconds after " +
+                    $"start time {startTime}; current time {currentTime}.");
+
             if (delaySeconds > 0)
             {
-                DateTime nextTime = context.CurrentUtcDateTime.AddSeconds(delaySeconds);
+                DateTime nextTime = startTime.AddSeconds(delaySeconds);
                 await context.CreateTimer(nextTime, CancellationToken.None);
                 context.ContinueAsNew(lastTweetId);
             }
@@ -86,7 +113,7 @@ namespace DurablePoc
             TweetProcessingData tpd = context.GetInput<TweetProcessingData>();
 
             if (!context.IsReplaying)
-                log.LogDebug("Call A_GetBusinessLogicScore");
+                log.LogInformation("Call A_GetBusinessLogicScore");
 
             // The following function is not async, so it could be called directly rather than through the activity model.
             (tpd.Score, tpd.TextWithoutTagsHighlighted) = await
@@ -129,7 +156,7 @@ namespace DurablePoc
             } // if (tpd.ScoreBL > 0)
 
             if (!context.IsReplaying)
-                log.LogDebug("Call A_GetBusinessLogicScore");
+                log.LogInformation("Call A_GetBusinessLogicScore");
 
             return tpd;
         } // func
