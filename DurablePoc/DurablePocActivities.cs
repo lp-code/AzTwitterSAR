@@ -1,4 +1,3 @@
-# nullable enable
 using AzTwitterSar.ProcessTweets;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.WebJobs;
@@ -67,7 +66,7 @@ namespace DurablePoc
             };
 
             // Since the further processing can scramble the order again, we don't need to sort here.
-            var tweets = Search.SearchTweets(searchParameter);
+            var tweets = await SearchAsync.SearchTweets(searchParameter);
             log.LogInformation($"Got {tweets.Count()} new tweets. Convert to TweetProcessingData.");
 
             List<TweetProcessingData> tpds = new List<TweetProcessingData>();
@@ -94,54 +93,61 @@ namespace DurablePoc
         }
 
         [FunctionName("A_GetBusinessLogicScore")]
-        public static Tuple<float, string> GetBusinessLogicScore([ActivityTrigger] string textWithoutTags, ILogger log)
+        public static Tuple<float, PublishLabel, string> GetBusinessLogicScore([ActivityTrigger] string textWithoutTags, ILogger log)
         {
             log.LogInformation($"Getting BusinessLogicScore.");
             string highlightedText;
             float score = AzTwitterSarFunc.ScoreTweet(textWithoutTags, out highlightedText);
-            return new Tuple<float, string>(score, highlightedText);
-        }
+            float minScoreBL = AzTwitterSarFunc.GetScoreFromEnv("AZTWITTERSAR_MINSCORE", log, 0.01f);
+            
+            PublishLabel label = PublishLabel.Negative;
+            if (score > minScoreBL)
+                label = PublishLabel.Positive;
 
-        [FunctionName("A_GetEnvVars")]
-        public static EnvVars GetEnvVars([ActivityTrigger] string nothing, ILogger log)
-        {
-            log.LogInformation($"Getting environment variable values.");
-            return new EnvVars
-            {
-                MinScoreBL = AzTwitterSarFunc.GetScoreFromEnv("AZTWITTERSAR_MINSCORE", log, 0.01f),
-                MinScoreBLAlert = AzTwitterSarFunc.GetScoreFromEnv("AZTWITTERSAR_MINSCORE_ALERT", log, 0.1f),
-                
-                SlackWebHook = Environment.GetEnvironmentVariable("AZTWITTERSAR_SLACKHOOK")
-            };
+            return new Tuple<float, PublishLabel, string>(score, label, highlightedText);
         }
-
 
         [FunctionName("A_GetMlScore")]
-        public static async Task<Tuple<float, int, string>> GetMlScore([ActivityTrigger] string tweet, ILogger log)
+        public static async Task<MlResult> GetMlScore([ActivityTrigger] string tweet, ILogger log)
         {
             log.LogInformation($"Getting ML score.");
             string mlUriString = Environment.GetEnvironmentVariable("AZTWITTERSAR_AI_URI");
-            
-            var payload = JsonConvert.SerializeObject(new { tweet = tweet });
-            var httpContent = new StringContent(payload, Encoding.UTF8, "application/json");
 
-            HttpClient httpClient = new HttpClient();
-            httpClient.Timeout = TimeSpan.FromSeconds(30);
-            Uri mlFuncUri = new Uri(mlUriString);
-
-            log.LogInformation($"Calling ML-inference at {mlFuncUri.ToString()}.");
-            HttpResponseMessage httpResponseMsg = await httpClient.PostAsync(mlFuncUri, httpContent);
-
-            if (!(mlUriString is null)
-                && httpResponseMsg.StatusCode == HttpStatusCode.OK
-                && httpResponseMsg.Content != null)
+            MlResult result = new MlResult
             {
-                var responseContent = await httpResponseMsg.Content.ReadAsStringAsync();
-                ResponseData ml_result = JsonConvert.DeserializeObject<ResponseData>(responseContent);
+                Score = 0,
+                Label = PublishLabel.NotAssigned,
+                MlVersion = ""
+            };
 
-                return new Tuple<float, int, string>(ml_result.Score, ml_result.Label, ml_result.Version);
+            if (mlUriString is null)
+            {
+                log.LogError($"ML-inference link not configured.");
             }
-            return new Tuple<float, int, string>(0, 0, null);
+            else
+            {
+                var payload = JsonConvert.SerializeObject(new { tweet = tweet });
+                var httpContent = new StringContent(payload, Encoding.UTF8, "application/json");
+
+                HttpClient httpClient = new HttpClient();
+                httpClient.Timeout = TimeSpan.FromSeconds(30);
+                Uri mlFuncUri = new Uri(mlUriString);
+
+                log.LogInformation($"Calling ML-inference.");
+                HttpResponseMessage httpResponseMsg = await httpClient.PostAsync(mlFuncUri, httpContent);
+
+                if (httpResponseMsg.StatusCode == HttpStatusCode.OK
+                    && httpResponseMsg.Content != null)
+                {
+                    var responseContent = await httpResponseMsg.Content.ReadAsStringAsync();
+                    ResponseData ml_result = JsonConvert.DeserializeObject<ResponseData>(responseContent);
+
+                    result.Score = ml_result.Score;
+                    result.Label = ml_result.Label == 1 ? PublishLabel.Positive : PublishLabel.Negative;
+                    result.MlVersion = ml_result.Version;
+                }
+            }
+            return result;
         }
 
         [FunctionName("A_PublishTweets")]
@@ -198,7 +204,7 @@ namespace DurablePoc
             // version's, so the storing is reimplemented here.
             string storageAccountConnectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
 
-            CloudTable? cloudTable = null;
+            CloudTable cloudTable = null;
 
             if (CloudStorageAccount.TryParse(storageAccountConnectionString, out CloudStorageAccount storageAccount))
             {

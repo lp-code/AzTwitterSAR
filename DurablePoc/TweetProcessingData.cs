@@ -6,6 +6,13 @@ using System.Text;
 
 namespace DurablePoc
 {
+    public enum PublishLabel
+    {
+        NotAssigned,
+        Negative,
+        Positive
+    }
+
     // This class can both be JSON-serialized for passing into/out of activities,
     // and it is a TableEntity, so it can be written to Azure Table storage.
     public class TweetProcessingData : TableEntity
@@ -20,7 +27,8 @@ namespace DurablePoc
         {
             get
             {
-                return (this.Label == 1 || (this.Label == 2 && this.VersionML is null));
+                return (this.LabelML == PublishLabel.Positive ||
+                    (this.LabelML == PublishLabel.NotAssigned && this.LabelBL == PublishLabel.Positive));
             }
         }
 
@@ -67,8 +75,11 @@ namespace DurablePoc
         [JsonProperty("textWithoutTagsHighlighted")]
         public string TextWithoutTagsHighlighted { get; set; }
 
-        [JsonProperty("label")]
-        public int? Label { get; set; }
+        [JsonProperty("labelBL")]
+        public PublishLabel LabelBL { get; set; } = PublishLabel.NotAssigned;
+
+        [JsonProperty("labelML")]
+        public PublishLabel LabelML { get; set; } = PublishLabel.NotAssigned;
 
         [JsonProperty("score")]
         public float Score { get; set; }
@@ -83,4 +94,10 @@ namespace DurablePoc
         public string VersionML { get; set; }
     }
 
+    public class MlResult
+    {
+        public float Score;
+        public PublishLabel Label;
+        public string MlVersion;
+    }
 }

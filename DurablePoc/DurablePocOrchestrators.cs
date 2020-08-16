@@ -113,47 +113,33 @@ namespace DurablePoc
             TweetProcessingData tpd = context.GetInput<TweetProcessingData>();
 
             if (!context.IsReplaying)
-                log.LogInformation("Call A_GetBusinessLogicScore");
+                log.LogInformation("P_ProcessTweet call A_GetBusinessLogicScore");
 
             // The following function is not async, so it could be called directly rather than through the activity model.
-            (tpd.Score, tpd.TextWithoutTagsHighlighted) = await
-                context.CallActivityAsync<Tuple<float, string>>("A_GetBusinessLogicScore", tpd.TextWithoutTags);
+            (tpd.Score, tpd.LabelBL, tpd.TextWithoutTagsHighlighted) = await
+                context.CallActivityAsync<Tuple<float, PublishLabel, string>>("A_GetBusinessLogicScore", tpd.TextWithoutTags);
 
-            if (tpd.Score > 0)
+            if (tpd.LabelBL != PublishLabel.Negative)
             {
-                // Getting environment variables is not permitted in an orchestrator.
-                EnvVars envVars = await context.CallActivityAsync<EnvVars>("A_GetEnvVars", null);
+                log.LogInformation("Minimum score exceeded, query ML filter.");
 
-                if (tpd.Score > envVars.MinScoreBL)
+                (tpd.ScoreML, tpd.LabelML, tpd.VersionML) = await context.CallActivityAsync<Tuple<float, PublishLabel, string>>("A_GetMlScore", tpd.TextWithoutTags);
+
+                if (!(tpd.VersionML is null))
+                { 
+                    log.LogInformation(
+                        $"ML-inference OK, label: {tpd.LabelML}, "
+                        + $"score: {tpd.ScoreML.ToString("F", CultureInfo.InvariantCulture)}, "
+                        + $"version: {tpd.VersionML}");
+                }
+                else
                 {
-                    log.LogInformation("Minimum score exceeded, query ML filter.");
-                    tpd.Label = 2; // Since the main orchestrator does not have the minScore we have to indicate
-                                   // whether the BL has indicated posting (in case ML is not working).
-                    if (!(envVars.MlUriString is null))
-                    {
-                        (tpd.ScoreML, tpd.Label, tpd.VersionML) = await context.CallActivityAsync<Tuple<float, int, string>>("A_GetMlScore", tpd.TextWithoutTags);
-                    }
-                    else
-                    {
-                        log.LogInformation($"ML-inference link not configured.");
-                    }
-
-                    if (!(tpd.VersionML is null))
-                    { 
-                        log.LogInformation(
-                            $"ML-inference OK, label: {tpd.Label}, "
-                            + $"score: {tpd.ScoreML.ToString("F", CultureInfo.InvariantCulture)}, "
-                            + $"version: {tpd.VersionML}");
-                    }
-                    else
-                    {
-                        // Did not get a reply from the ML function, therefore
-                        // we fall back and continue according to the traditional
-                        // logic's result; indicated by tpd.VersionML is null.
-                        log.LogInformation("ML inference failed or did not reply, rely on conventional logic.");
-                    }
-                } // if (tpd.ScoreBL > envVars.MinScoreBL)
-            } // if (tpd.ScoreBL > 0)
+                    // Did not get a reply from the ML function, therefore
+                    // we fall back and continue according to the traditional
+                    // logic's result; indicated by tpd.VersionML is null.
+                    log.LogInformation("ML inference failed or did not reply, rely on conventional logic.");
+                }
+            }
 
             if (!context.IsReplaying)
                 log.LogInformation("Call A_GetBusinessLogicScore");
