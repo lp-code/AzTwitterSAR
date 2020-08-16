@@ -43,7 +43,7 @@ namespace DurablePoc
         [FunctionName("A_GetTweets")]
         public static async Task<List<TweetProcessingData>> GetTweets([ActivityTrigger] string lastTweetId, ILogger log)
         {
-            log.LogInformation($"Getting new tweets after {lastTweetId}.");
+            log.LogInformation($"A_GetTweets: Getting new tweets after {lastTweetId}.");
             string apiKey = Environment.GetEnvironmentVariable("TwitterApiKey"); // aka consumer key
             string apiSecretKey = Environment.GetEnvironmentVariable("TwitterApiSecretKey"); // aka consumer secret
             string accessToken = Environment.GetEnvironmentVariable("TwitterAccessToken");
@@ -67,7 +67,6 @@ namespace DurablePoc
 
             // Since the further processing can scramble the order again, we don't need to sort here.
             var tweets = await SearchAsync.SearchTweets(searchParameter);
-            log.LogInformation($"Got {tweets.Count()} new tweets. Convert to TweetProcessingData.");
 
             List<TweetProcessingData> tpds = new List<TweetProcessingData>();
             foreach (var tweet in tweets)
@@ -88,14 +87,15 @@ namespace DurablePoc
 
                 tpds.Add(tpd);
             }
-            
+            log.LogInformation($"A_GetTweets: Done, got {tweets.Count()} new tweets.");
+
             return tpds;
         }
 
         [FunctionName("A_GetBusinessLogicScore")]
         public static Tuple<float, PublishLabel, string> GetBusinessLogicScore([ActivityTrigger] string textWithoutTags, ILogger log)
         {
-            log.LogInformation($"Getting BusinessLogicScore.");
+            log.LogInformation("A_GetBusinessLogicScore: Start.");
             string highlightedText;
             float score = AzTwitterSarFunc.ScoreTweet(textWithoutTags, out highlightedText);
             float minScoreBL = AzTwitterSarFunc.GetScoreFromEnv("AZTWITTERSAR_MINSCORE", log, 0.01f);
@@ -104,13 +104,15 @@ namespace DurablePoc
             if (score > minScoreBL)
                 label = PublishLabel.Positive;
 
+            log.LogInformation("A_GetBusinessLogicScore: Done.");
+
             return new Tuple<float, PublishLabel, string>(score, label, highlightedText);
         }
 
         [FunctionName("A_GetMlScore")]
         public static async Task<MlResult> GetMlScore([ActivityTrigger] string tweet, ILogger log)
         {
-            log.LogInformation($"Getting ML score.");
+            log.LogInformation("A_GetMlScore: Start.");
             string mlUriString = Environment.GetEnvironmentVariable("AZTWITTERSAR_AI_URI");
 
             MlResult result = new MlResult
@@ -147,13 +149,15 @@ namespace DurablePoc
                     result.MlVersion = ml_result.Version;
                 }
             }
+            log.LogInformation("A_GetMlScore: Done.");
+
             return result;
         }
 
         [FunctionName("A_PublishTweets")]
         public static async Task<int> PublishTweets([ActivityTrigger] List<TweetProcessingData> tpds, ILogger log)
         {
-            log.LogInformation($"Publishing {tpds.Count} tweets.");
+            log.LogInformation($"A_PublishTweets: Publishing {tpds.Count} tweets.");
 
             float minScoreBLAlert = AzTwitterSarFunc.GetScoreFromEnv("AZTWITTERSAR_MINSCORE_ALERT", log, 0.1f);
             foreach (var tpd in tpds)
@@ -171,13 +175,16 @@ namespace DurablePoc
                 int sendResult = AzTwitterSarFunc.PostSlackMessage(log, slackMsg);
                 log.LogInformation($"Message posted to slack, result: {sendResult}");
             }
-            log.LogInformation($"Finished publishing tweets.");
+
+            log.LogInformation($"A_PublishTweets: Done.");
+
             return 0;
         }
 
         [FunctionName("A_GetDelaySeconds")]
         public static int GetDelaySeconds([ActivityTrigger] DateTime startTime, ILogger log)
         {
+            log.LogInformation("A_GetDelaySeconds: Start.");
             DateTime currentTime = DateTime.UtcNow;
 
             const int targetSecondsBetweenRuns = 60;
@@ -186,19 +193,24 @@ namespace DurablePoc
 
             bool envVarSet = Int32.TryParse(Environment.GetEnvironmentVariable("AZTWITTERSAR_ACTIVE"), out int envVarValue);
             bool active = envVarSet && (envVarValue == 1);
-            
+
+            int delaySeconds = 0;
             if (active)
-                return Math.Max(
-                    targetSecondsBetweenRuns - (int) (currentTime - startTime).TotalSeconds, 
+            {
+                delaySeconds = Math.Max(
+                    targetSecondsBetweenRuns - (int)(currentTime - startTime).TotalSeconds,
                     minimumSecondsBetweenRuns);
-            else
-                return 0;
+            }
+            log.LogInformation($"A_GetDelaySeconds: Done, determined delay is {delaySeconds} seconds.");
+
+            return delaySeconds;
         }
 
         [FunctionName("A_LogTweets")]
         public static async Task<int> LogTweets([ActivityTrigger] List<TweetProcessingData> tpds, ILogger log)
         {
-            log.LogInformation($"Logging tweets to table storage.");
+            log.LogInformation($"A_LogTweets: Start logging tweets to table storage.");
+
             // The data structure and content is quite different from the previous
             // version's, so the storing is reimplemented here.
             string storageAccountConnectionString = Environment.GetEnvironmentVariable("AzureWebJobsStorage");
@@ -240,6 +252,9 @@ namespace DurablePoc
                     throw;
                 }
             }
+
+            log.LogInformation($"A_LogTweets: Done.");
+            
             return 0;
         }
     }

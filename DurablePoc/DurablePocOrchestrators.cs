@@ -119,7 +119,7 @@ namespace DurablePoc
 
             if (tpd.LabelBL != PublishLabel.Negative)
             {
-                log.LogInformation("Minimum score exceeded, query ML filter.");
+                log.LogInformation("Minimum BL score exceeded, query ML filter.");
 
                 (tpd.ScoreML, tpd.LabelML, tpd.VersionML) = await context.CallActivityAsync<Tuple<float, PublishLabel, string>>("A_GetMlScore", tpd.TextWithoutTags);
 
@@ -140,7 +140,7 @@ namespace DurablePoc
             }
 
             if (!context.IsReplaying)
-                log.LogInformation("Call A_GetBusinessLogicScore");
+                log.LogInformation("Completed  O_ProcessTweet.");
 
             return tpd;
         } // func
