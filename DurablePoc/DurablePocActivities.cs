@@ -48,6 +48,7 @@ namespace DurablePoc
             string apiSecretKey = Environment.GetEnvironmentVariable("TwitterApiSecretKey"); // aka consumer secret
             string accessToken = Environment.GetEnvironmentVariable("TwitterAccessToken");
             string accessTokenSecret = Environment.GetEnvironmentVariable("TwitterAccessTokenSecret");
+            string monitoredTwitterAccount = Environment.GetEnvironmentVariable("MonitoredTwitterAccount");
 
             var userCredentials = Auth.SetUserCredentials(apiKey, apiSecretKey, accessToken, accessTokenSecret);
             var authenticatedUser = User.GetAuthenticatedUser(userCredentials);
@@ -59,7 +60,7 @@ namespace DurablePoc
             //       (Therefore, in order to test on past tweets, one may need
             //       to increase MaximumNumberOfResults considerably to get ALL
             //       tweets from the one targeted to the current one.
-            SearchTweetsParameters searchParameter = new SearchTweetsParameters("from:politivest")
+            SearchTweetsParameters searchParameter = new SearchTweetsParameters($"from:{monitoredTwitterAccount}")
             {
                 MaximumNumberOfResults = 10,
                 SinceId = long.Parse(lastTweetId)
