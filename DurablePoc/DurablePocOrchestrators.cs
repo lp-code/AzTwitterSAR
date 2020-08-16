@@ -87,13 +87,11 @@ namespace DurablePoc
                     log.LogInformation($"Got no new tweets.");
             }
 
-            DateTime currentTime = context.CurrentUtcDateTime;
             int delaySeconds = await context.CallActivityAsync<int>(
-                "A_GetDelaySeconds", new Tuple<DateTime, DateTime>(startTime, currentTime));
+                "A_GetDelaySeconds", startTime);
 
             if (!context.IsReplaying)
-                log.LogInformation($"Determined delay: {delaySeconds} seconds after " +
-                    $"start time {startTime}; current time {currentTime}.");
+                log.LogInformation($"Determined delay: {delaySeconds} seconds after start time {startTime}.");
 
             if (delaySeconds > 0)
             {

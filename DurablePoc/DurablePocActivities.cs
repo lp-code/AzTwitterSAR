@@ -88,7 +88,7 @@ namespace DurablePoc
 
                 tpds.Add(tpd);
             }
-
+            
             return tpds;
         }
 
@@ -176,10 +176,9 @@ namespace DurablePoc
         }
 
         [FunctionName("A_GetDelaySeconds")]
-        public static int GetDelaySeconds([ActivityTrigger] Tuple<DateTime, DateTime> datetimes, ILogger log)
+        public static int GetDelaySeconds([ActivityTrigger] DateTime startTime, ILogger log)
         {
-            DateTime startTime = datetimes.Item1;
-            DateTime currentTime = datetimes.Item2;
+            DateTime currentTime = DateTime.UtcNow;
 
             const int targetSecondsBetweenRuns = 60;
             const int minimumSecondsBetweenRuns = 30;
