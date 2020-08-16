@@ -57,7 +57,7 @@ namespace DurablePoc
                 // Find the tweets that shall be published, chronological order.
                 List<TweetProcessingData> publishList = (
                     from tpd in logList
-                    where (tpd.Label == 1 || (tpd.Label == 2 && tpd.VersionML is null))
+                    where tpd.ShallBePublished
                     orderby Int64.Parse(tpd.IdStr)
                     select tpd).ToList();
 

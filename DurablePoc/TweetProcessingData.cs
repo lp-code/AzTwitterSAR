@@ -16,6 +16,14 @@ namespace DurablePoc
         public TweetProcessingData()
         {}
 
+        public bool ShallBePublished
+        {
+            get
+            {
+                return (this.Label == 1 || (this.Label == 2 && this.VersionML is null));
+            }
+        }
+
         // Tweetinvi ITweet data members.
         [JsonProperty("idStr")]
         public string IdStr
