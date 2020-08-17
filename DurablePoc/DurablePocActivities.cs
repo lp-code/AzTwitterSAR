@@ -151,7 +151,7 @@ namespace DurablePoc
                     + $"Link: http://twitter.com/politivest/status/{tpd.IdStr}";
 
                 log.LogInformation($"Message: {slackMsg}");
-                int sendResult = SlackClient.PostSlackMessage(log, slackMsg);
+                int sendResult = await SlackClient.PostSlackMessageAsync(log, slackMsg);
                 log.LogInformation($"Message posted to slack, result: {sendResult}");
             }
 

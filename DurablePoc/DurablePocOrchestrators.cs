@@ -121,7 +121,10 @@ namespace DurablePoc
             {
                 log.LogInformation("Minimum BL score exceeded, query ML filter.");
 
-                (tpd.ScoreML, tpd.LabelML, tpd.VersionML) = await context.CallActivityAsync<Tuple<float, PublishLabel, string>>("A_GetMlScore", tpd.TextWithoutTags);
+                var mlResult = await context.CallActivityAsync<MlResult>("A_GetMlScore", tpd.TextWithoutTags);
+                tpd.ScoreML = mlResult.Score;
+                tpd.LabelML = mlResult.Label;
+                tpd.VersionML = mlResult.MlVersion;
 
                 if (!(tpd.VersionML is null))
                 { 
