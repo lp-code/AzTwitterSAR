@@ -191,7 +191,7 @@ Politi, Brannvesenet, Norske redningshunder, Røde Kors og Norsk folkehjelp bistå
         {
 
             var responseContent = @"{'tags': ['placeA', 'placeB'], 'label': 1, 'text': 'hello', 'original': 'bla'}";
-            AzTwitterSar.ProcessTweets.ResponseData ml_result = JsonConvert.DeserializeObject<ResponseData>(responseContent);
+            ResponseData ml_result = JsonConvert.DeserializeObject<ResponseData>(responseContent);
 
             Assert.Equal(new List<string> { "placeA", "placeB" }, ml_result.Tags);
             Assert.Equal("hello", ml_result.Text);

@@ -1,4 +1,5 @@
-﻿using OfficeOpenXml;
+﻿using DurablePoc;
+using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -26,7 +27,7 @@ namespace ProcessTweets
                     if (worksheet.Cells[row, 4] != null && (worksheet.Cells[row, 4]).Value != null)
                     {
                         // run the scoring function, output if nonzero
-                        float score = AzTwitterSar.ProcessTweets.AzTwitterSarFunc.ScoreTweet((worksheet.Cells[row, 4]).Value.ToString(), out string _);
+                        float score = TweetAnalysis.ScoreTweet((worksheet.Cells[row, 4]).Value.ToString(), out string _);
                         worksheet.Cells[row, 2].Value = score;
                         if (score > 0)
                         {
