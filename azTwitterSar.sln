@@ -3,16 +3,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29326.143
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzTwitterSar", "azTwitterSar\AzTwitterSar.csproj", "{F905CBA8-D5B2-45A7-8E24-C2AB5789056F}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProcessTweets2", "ProcessTweets2\ProcessTweets2.csproj", "{26B537DA-F5BD-4506-9EBF-0F521600F1DB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2BB5EF89-50E7-467B-B886-DF55E63301E4} = {2BB5EF89-50E7-467B-B886-DF55E63301E4}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzTwitterSarUnittest", "AzTwitterSarUnittest\AzTwitterSarUnittest.csproj", "{61C1E3D7-DDA0-458F-A3ED-89812FD52B3A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2BB5EF89-50E7-467B-B886-DF55E63301E4} = {2BB5EF89-50E7-467B-B886-DF55E63301E4}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DurablePoc", "DurablePoc\DurablePoc.csproj", "{2BB5EF89-50E7-467B-B886-DF55E63301E4}"
-	ProjectSection(ProjectDependencies) = postProject
-		{F905CBA8-D5B2-45A7-8E24-C2AB5789056F} = {F905CBA8-D5B2-45A7-8E24-C2AB5789056F}
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,10 +21,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{F905CBA8-D5B2-45A7-8E24-C2AB5789056F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F905CBA8-D5B2-45A7-8E24-C2AB5789056F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F905CBA8-D5B2-45A7-8E24-C2AB5789056F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F905CBA8-D5B2-45A7-8E24-C2AB5789056F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{26B537DA-F5BD-4506-9EBF-0F521600F1DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{26B537DA-F5BD-4506-9EBF-0F521600F1DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{26B537DA-F5BD-4506-9EBF-0F521600F1DB}.Release|Any CPU.ActiveCfg = Release|Any CPU

@@ -1,4 +1,3 @@
-using AzTwitterSar.ProcessTweets;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
@@ -10,7 +9,6 @@ using Tweetinvi.Parameters;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Text;
-using Tweetinvi.Models.Entities;
 using System.Net.Http;
 using Newtonsoft.Json;
 using System.Net;
@@ -18,28 +16,8 @@ using System.Globalization;
 
 namespace DurablePoc
 {
-    public class EnvVars
-    {
-        public float MinScoreBL { get; set; }
-        public float MinScoreBLAlert { get; set; }
-        public string MlUriString { get; set; }
-        public string SlackWebHook { get; set; }
-    }
-
-
     public static class DurablePocActivities
     {
-        private static string removeHashtagsFromText(string FullText, List<IHashtagEntity> Hashtags)
-        {
-            StringBuilder sb = new StringBuilder(FullText);
-            // Remove right to left.
-            for (int i = Hashtags.Count-1; i >= 0; i--)
-            {
-                sb.Remove(Hashtags[i].Indices[0], Hashtags[i].Indices[1] - Hashtags[i].Indices[0]);
-            }
-            return sb.ToString();
-        }
-
         [FunctionName("A_GetTweets")]
         public static async Task<List<TweetProcessingData>> GetTweets([ActivityTrigger] string lastTweetId, ILogger log)
         {
@@ -84,7 +62,7 @@ namespace DurablePoc
                 tpd.InReplyToStatusIdStr = tweet.InReplyToStatusIdStr;
                 tpd.Url = tweet.Url;
 
-                tpd.TextWithoutTags = removeHashtagsFromText(tweet.FullText, tweet.Hashtags);
+                tpd.TextWithoutTags = TweetAnalysis.removeHashtagsFromText(tweet.FullText, tweet.Hashtags);
 
                 tpds.Add(tpd);
             }
@@ -98,8 +76,8 @@ namespace DurablePoc
         {
             log.LogInformation("A_GetBusinessLogicScore: Start.");
             string highlightedText;
-            float score = AzTwitterSarFunc.ScoreTweet(textWithoutTags, out highlightedText);
-            float minScoreBL = AzTwitterSarFunc.GetScoreFromEnv("AZTWITTERSAR_MINSCORE", log, 0.01f);
+            float score = TweetAnalysis.ScoreTweet(textWithoutTags, out highlightedText);
+            float minScoreBL = TweetAnalysis.GetScoreFromEnv("AZTWITTERSAR_MINSCORE", log, 0.01f);
             
             PublishLabel label = PublishLabel.Negative;
             if (score > minScoreBL)
@@ -160,7 +138,7 @@ namespace DurablePoc
         {
             log.LogInformation($"A_PublishTweets: Publishing {tpds.Count} tweets.");
 
-            float minScoreBLAlert = AzTwitterSarFunc.GetScoreFromEnv("AZTWITTERSAR_MINSCORE_ALERT", log, 0.1f);
+            float minScoreBLAlert = TweetAnalysis.GetScoreFromEnv("AZTWITTERSAR_MINSCORE_ALERT", log, 0.1f);
             foreach (var tpd in tpds)
             {
                 string slackMsg = "";
@@ -173,7 +151,7 @@ namespace DurablePoc
                     + $"Link: http://twitter.com/politivest/status/{tpd.IdStr}";
 
                 log.LogInformation($"Message: {slackMsg}");
-                int sendResult = AzTwitterSarFunc.PostSlackMessage(log, slackMsg);
+                int sendResult = SlackClient.PostSlackMessage(log, slackMsg);
                 log.LogInformation($"Message posted to slack, result: {sendResult}");
             }
 
