@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DurablePoc\DurableAzTwitterSar.csproj" />
+    <ProjectReference Include="..\DurableAzTwitterSar\DurableAzTwitterSar.csproj" />
   </ItemGroup>
 
 </Project>
