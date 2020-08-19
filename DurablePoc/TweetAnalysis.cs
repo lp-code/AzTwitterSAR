@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using Tweetinvi.Models.Entities;
 
-namespace DurablePoc
+namespace DurableAzTwitterSar
 {
     public static class TweetAnalysis
     {

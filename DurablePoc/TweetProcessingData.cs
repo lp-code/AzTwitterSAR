@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace DurablePoc
+namespace DurableAzTwitterSar
 {
     public enum PublishLabel
     {

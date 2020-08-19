@@ -8,11 +8,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DurablePoc
+namespace DurableAzTwitterSar
 {
 
 
-    public static class DurablePocOrchestrators
+    public static class DurableOrchestrators
     {
         [FunctionName("O_MainOrchestrator")]
         public static async Task<string> MainOrchestrator(

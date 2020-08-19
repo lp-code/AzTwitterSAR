@@ -14,9 +14,9 @@ using Newtonsoft.Json;
 using System.Net;
 using System.Globalization;
 
-namespace DurablePoc
+namespace DurableAzTwitterSar
 {
-    public static class DurablePocActivities
+    public static class DurableActivities
     {
         [FunctionName("A_GetTweets")]
         public static async Task<List<TweetProcessingData>> GetTweets([ActivityTrigger] string lastTweetId, ILogger log)

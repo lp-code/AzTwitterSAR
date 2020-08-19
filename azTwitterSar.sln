@@ -8,12 +8,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProcessTweets2", "ProcessTw
 		{2BB5EF89-50E7-467B-B886-DF55E63301E4} = {2BB5EF89-50E7-467B-B886-DF55E63301E4}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzTwitterSarUnittest", "AzTwitterSarUnittest\AzTwitterSarUnittest.csproj", "{61C1E3D7-DDA0-458F-A3ED-89812FD52B3A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzTwitterSarTests", "AzTwitterSarUnittest\AzTwitterSarTests.csproj", "{61C1E3D7-DDA0-458F-A3ED-89812FD52B3A}"
 	ProjectSection(ProjectDependencies) = postProject
 		{2BB5EF89-50E7-467B-B886-DF55E63301E4} = {2BB5EF89-50E7-467B-B886-DF55E63301E4}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DurablePoc", "DurablePoc\DurablePoc.csproj", "{2BB5EF89-50E7-467B-B886-DF55E63301E4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DurableAzTwitterSar", "DurablePoc\DurableAzTwitterSar.csproj", "{2BB5EF89-50E7-467B-B886-DF55E63301E4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{F5A586C2-18DE-415D-B086-7FF58CE8739B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,6 +38,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{61C1E3D7-DDA0-458F-A3ED-89812FD52B3A} = {F5A586C2-18DE-415D-B086-7FF58CE8739B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8B32FBA0-13E5-4D1D-9BFF-C52D76BC6688}

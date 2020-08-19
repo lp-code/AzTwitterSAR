@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using DurablePoc;
+using DurableAzTwitterSar;
 using Newtonsoft.Json;
 using Xunit;
 
-namespace AzTwitterSarUnitTest
+namespace AzTwitterSarTests
 {
     public class UnitTestAzTwitterSar
     {

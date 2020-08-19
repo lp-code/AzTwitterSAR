@@ -11,9 +11,9 @@ using Microsoft.Extensions.Logging;
 // getInput gives null error: https://github.com/Azure/azure-functions-durable-extension/issues/1199
 
 
-namespace DurablePoc
+namespace DurableAzTwitterSar
 {
-    public static class DurablePocStarters
+    public static class DurableStarters
     {
         [FunctionName("S_HttpStart")]
         public static async Task<HttpResponseMessage> HttpStart(
