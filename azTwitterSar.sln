@@ -3,17 +3,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29326.143
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProcessTweets2", "ProcessTweets2\ProcessTweets2.csproj", "{26B537DA-F5BD-4506-9EBF-0F521600F1DB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProcessTweets", "ProcessTweets\ProcessTweets.csproj", "{26B537DA-F5BD-4506-9EBF-0F521600F1DB}"
 	ProjectSection(ProjectDependencies) = postProject
 		{2BB5EF89-50E7-467B-B886-DF55E63301E4} = {2BB5EF89-50E7-467B-B886-DF55E63301E4}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzTwitterSarTests", "AzTwitterSarUnittest\AzTwitterSarTests.csproj", "{61C1E3D7-DDA0-458F-A3ED-89812FD52B3A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzTwitterSarTests", "AzTwitterSarTests\AzTwitterSarTests.csproj", "{61C1E3D7-DDA0-458F-A3ED-89812FD52B3A}"
 	ProjectSection(ProjectDependencies) = postProject
 		{2BB5EF89-50E7-467B-B886-DF55E63301E4} = {2BB5EF89-50E7-467B-B886-DF55E63301E4}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DurableAzTwitterSar", "DurablePoc\DurableAzTwitterSar.csproj", "{2BB5EF89-50E7-467B-B886-DF55E63301E4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DurableAzTwitterSar", "DurableAzTwitterSar\DurableAzTwitterSar.csproj", "{2BB5EF89-50E7-467B-B886-DF55E63301E4}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{F5A586C2-18DE-415D-B086-7FF58CE8739B}"
 EndProject
