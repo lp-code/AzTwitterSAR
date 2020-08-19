@@ -3,9 +3,8 @@
 # Add steps that analyze code, save build artifacts, deploy, and more:
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/languages/dotnet-core
 
-# Replace "trigger" by "pr" for pull request building.
 trigger:
-- master
+- pr
 
 variables:
   # Build configuration setting
@@ -50,6 +49,13 @@ stages:
         projects: |
           $(workingDirectory)/*.csproj
         arguments: --no-restore --configuration $(buildConfiguration)
+
+    - task: DotNetCoreCLI@2
+      displayName: Run tests
+      inputs:
+        command: test
+        projects: '**/*Tests/*.csproj'
+        arguments: '--configuration $(buildConfiguration)'
 
     - task: DotNetCoreCLI@2
       displayName: 'Publish the project - $(buildConfiguration)'
