@@ -13,12 +13,17 @@
             "defaultValue": "dev",
             "allowedValues": [
                 "dev",
+				"test",
                 "prod"
             ],
             "metadata": {
                 "description": "Specify the environment name (dev, prod)."
             }
         },
+        "_utcValue": {
+            "type": "string",
+            "defaultValue": "[utcNow()]"
+        }
     },
     "variables": {
         "functionAppName": "[concat('func-', parameters('mainName'), '-', parameters('env'))]",
@@ -30,7 +35,11 @@
             "AzureUSGovernment": "usgovvirginia"
         },
         "timezone": "UTC",
-        "runtimeStack": "dotnet"
+        "runtimeStack": "dotnet",
+		"tags": {
+		  "Environment": "[toUpper(parameters('env'))]",
+		  "LastDeployment": "[parameters('_utcValue')]"
+		}
     },
     "resources": [
         {
@@ -38,6 +47,7 @@
             "type": "Microsoft.Web/sites",
             "apiVersion": "2019-08-01",
             "location": "[variables('location')]",
+			"tags": "[variables('tags')]",
             "kind": "functionapp",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
@@ -82,6 +92,7 @@
                 },
                 "name": "[variables('functionAppName')]",
                 "clientAffinityEnabled": false,
+                "httpsOnly": true,
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
             }
         },
@@ -90,7 +101,8 @@
             "apiVersion": "2019-08-01",
             "name": "[variables('hostingPlanName')]",
             "location": "[variables('location')]",
-            "properties": {
+            "tags": "[variables('tags')]",
+			"properties": {
                 "name": "[variables('hostingPlanName')]"
             },
             "sku": {
@@ -106,10 +118,32 @@
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('storageAccountName')]",
             "location": "[variables('location')]",
-            "sku": {
+            "tags": "[variables('tags')]",
+	        "kind": "StorageV2",
+			"sku": {
                 "name": "Standard_LRS",
                 "tier": "Standard"
-            }
+            },
+			"properties": {
+				"networkAcls": {
+				    "bypass": "AzureServices",
+				    "defaultAction": "Allow"
+				},
+				"supportsHttpsTrafficOnly": true,
+				"encryption": {
+				    "services": {
+					    "file": {
+					        "keyType": "Account",
+					        "enabled": true
+					    },
+					    "blob": {
+					        "keyType": "Account",
+					        "enabled": true
+				        }
+				    },
+				    "keySource": "Microsoft.Storage"
+				}
+			  }
         },
         {
             "apiVersion": "2018-05-01-preview",
@@ -120,7 +154,8 @@
                 "[concat('hidden-link:', resourceId('Microsoft.Web/sites/', variables('functionAppName')))]": "Resource"
             },
             "properties": {
-                "ApplicationId": "[variables('functionAppName')]"
+                "ApplicationId": "[variables('functionAppName')]",
+				"RetentionInDays": 30
             }
         }
     ],
