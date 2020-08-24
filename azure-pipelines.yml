@@ -8,7 +8,7 @@ trigger:
 
 variables:
   # Build configuration setting
-  buildConfiguration: 'Release'
+  buildConfiguration: 'Debug'
 
   # Azure Resource Manager connection created during pipeline creation
   azureSubscription: '45a6fef4-d860-401b-9ec2-7d6c0101f1f0'
@@ -174,4 +174,5 @@ stages:
               azureSubscription: '$(azureSubscription)'
               appType: functionApp
               appName: 'func-rkh-twittersar-prod'
-              package: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
+              package: '$(Pipeline.Workspace)/drop/**/*.zip'
+              deploymentMethod: runFromPackage

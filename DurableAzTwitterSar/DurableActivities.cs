@@ -1,18 +1,18 @@
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Extensions.Logging;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
 using Tweetinvi;
 using Tweetinvi.Parameters;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Text;
-using System.Net.Http;
-using Newtonsoft.Json;
-using System.Net;
-using System.Globalization;
 
 namespace DurableAzTwitterSar
 {
@@ -46,6 +46,7 @@ namespace DurableAzTwitterSar
 
             // Since the further processing can scramble the order again, we don't need to sort here.
             var tweets = await SearchAsync.SearchTweets(searchParameter);
+            //var tweets = Search.SearchTweets(searchParameter);
 
             List<TweetProcessingData> tpds = new List<TweetProcessingData>();
             foreach (var tweet in tweets)
