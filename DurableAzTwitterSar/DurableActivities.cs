@@ -57,8 +57,7 @@ namespace DurableAzTwitterSar
                 tpd.CreatedAt = tweet.CreatedAt;
                 tpd.FullText = tweet.FullText;
                 
-                tpd.Hashtags = new List<string>();
-                tweet.Hashtags.ForEach(t => tpd.Hashtags.Add(t.Text));
+                tpd.Hashtags = String.Join("|", tweet.Hashtags.Select(t => t.Text));
 
                 tpd.InReplyToStatusIdStr = tweet.InReplyToStatusIdStr;
                 tpd.Url = tweet.Url;
@@ -73,12 +72,12 @@ namespace DurableAzTwitterSar
         }
 
         [FunctionName("A_GetBusinessLogicScore")]
-        public static Tuple<float, PublishLabel, string> GetBusinessLogicScore([ActivityTrigger] string textWithoutTags, ILogger log)
+        public static Tuple<double, PublishLabel, string> GetBusinessLogicScore([ActivityTrigger] string textWithoutTags, ILogger log)
         {
             log.LogInformation("A_GetBusinessLogicScore: Start.");
             string highlightedText;
-            float score = TweetAnalysis.ScoreTweet(textWithoutTags, out highlightedText);
-            float minScoreBL = TweetAnalysis.GetScoreFromEnv("AZTWITTERSAR_MINSCORE", log, 0.01f);
+            double score = TweetAnalysis.ScoreTweet(textWithoutTags, out highlightedText);
+            double minScoreBL = TweetAnalysis.GetScoreFromEnv("AZTWITTERSAR_MINSCORE", log, 0.01f);
             
             PublishLabel label = PublishLabel.Negative;
             if (score > minScoreBL)
@@ -86,7 +85,7 @@ namespace DurableAzTwitterSar
 
             log.LogInformation("A_GetBusinessLogicScore: Done.");
 
-            return new Tuple<float, PublishLabel, string>(score, label, highlightedText);
+            return new Tuple<double, PublishLabel, string>(score, label, highlightedText);
         }
 
         [FunctionName("A_GetMlScore")]
@@ -139,7 +138,7 @@ namespace DurableAzTwitterSar
         {
             log.LogInformation($"A_PublishTweets: Publishing {tpds.Count} tweets.");
 
-            float minScoreBLAlert = TweetAnalysis.GetScoreFromEnv("AZTWITTERSAR_MINSCORE_ALERT", log, 0.1f);
+            double minScoreBLAlert = TweetAnalysis.GetScoreFromEnv("AZTWITTERSAR_MINSCORE_ALERT", log, 0.1f);
             foreach (var tpd in tpds)
             {
                 string slackMsg = "";

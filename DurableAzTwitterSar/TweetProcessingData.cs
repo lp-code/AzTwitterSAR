@@ -27,8 +27,8 @@ namespace DurableAzTwitterSar
         {
             get
             {
-                return (this.LabelML == PublishLabel.Positive ||
-                    (this.LabelML == PublishLabel.NotAssigned && this.LabelBL == PublishLabel.Positive));
+                return (this.LabelML == (int) PublishLabel.Positive ||
+                    (this.LabelML == (int) PublishLabel.NotAssigned && this.LabelBL == (int) PublishLabel.Positive));
             }
         }
 
@@ -59,7 +59,7 @@ namespace DurableAzTwitterSar
         public string FullText { get; set; }
 
         [JsonProperty("hashtags")]
-        public List<string> Hashtags { get; set; }
+        public string Hashtags { get; set; }
 
         [JsonProperty("inReplyToStatusIdStr")]
         public string InReplyToStatusIdStr  { get; set; }
@@ -75,17 +75,18 @@ namespace DurableAzTwitterSar
         [JsonProperty("textWithoutTagsHighlighted")]
         public string TextWithoutTagsHighlighted { get; set; }
 
+        // The labels have to be int here as enums do not autoconvert when writing to Azure table.
         [JsonProperty("labelBL")]
-        public PublishLabel LabelBL { get; set; } = PublishLabel.NotAssigned;
+        public int LabelBL { get; set; } = (int) PublishLabel.NotAssigned;
 
         [JsonProperty("labelML")]
-        public PublishLabel LabelML { get; set; } = PublishLabel.NotAssigned;
+        public int LabelML { get; set; } = (int) PublishLabel.NotAssigned;
 
         [JsonProperty("score")]
-        public float Score { get; set; }
+        public double Score { get; set; }
 
         [JsonProperty("scoreML")]
-        public float ScoreML { get; set; }
+        public double ScoreML { get; set; }
 
         [JsonProperty("versionBL")]
         public string VersionBL { get; set; }
@@ -96,7 +97,7 @@ namespace DurableAzTwitterSar
 
     public class MlResult
     {
-        public float Score;
+        public double Score;
         public PublishLabel Label;
         public string MlVersion;
     }

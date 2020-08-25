@@ -114,16 +114,18 @@ namespace DurableAzTwitterSar
                 log.LogInformation("P_ProcessTweet call A_GetBusinessLogicScore");
 
             // The following function is not async, so it could be called directly rather than through the activity model.
-            (tpd.Score, tpd.LabelBL, tpd.TextWithoutTagsHighlighted) = await
-                context.CallActivityAsync<Tuple<float, PublishLabel, string>>("A_GetBusinessLogicScore", tpd.TextWithoutTags);
+            PublishLabel tmpLabelBL = PublishLabel.NotAssigned;
+            (tpd.Score, tmpLabelBL, tpd.TextWithoutTagsHighlighted) = await
+                context.CallActivityAsync<Tuple<double, PublishLabel, string>>("A_GetBusinessLogicScore", tpd.TextWithoutTags);
+            tpd.LabelBL = (int)tmpLabelBL;
 
-            if (tpd.LabelBL != PublishLabel.Negative)
+            if (tpd.LabelBL != (int) PublishLabel.Negative)
             {
                 log.LogInformation("Minimum BL score exceeded, query ML filter.");
 
                 var mlResult = await context.CallActivityAsync<MlResult>("A_GetMlScore", tpd.TextWithoutTags);
                 tpd.ScoreML = mlResult.Score;
-                tpd.LabelML = mlResult.Label;
+                tpd.LabelML = (int)mlResult.Label;
                 tpd.VersionML = mlResult.MlVersion;
 
                 if (!(tpd.VersionML is null))
