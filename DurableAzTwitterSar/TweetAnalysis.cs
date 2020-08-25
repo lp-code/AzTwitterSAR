@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 using Tweetinvi.Models.Entities;
 
 namespace DurableAzTwitterSar
@@ -112,7 +113,8 @@ namespace DurableAzTwitterSar
             {
                 sb.Remove(Hashtags[i].Indices[0], Hashtags[i].Indices[1] - Hashtags[i].Indices[0]);
             }
-            return sb.ToString();
+            Regex reg = new Regex(@"^[\W0-9]*");
+            return reg.Replace(sb.ToString(), String.Empty); 
         }
 
         /// <summary>
