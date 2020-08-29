@@ -3,22 +3,18 @@
 # Add steps that analyze code, save build artifacts, deploy, and more:
 # https://docs.microsoft.com/en-us/azure/devops/pipelines/languages/dotnet-core
 
-# Replace "trigger" by "pr" for pull request building.
 trigger:
-- master
+- pr
 
 variables:
   # Build configuration setting
-  buildConfiguration: 'Release'
+  buildConfiguration: 'Debug'
 
   # Azure Resource Manager connection created during pipeline creation
   azureSubscription: '45a6fef4-d860-401b-9ec2-7d6c0101f1f0'
 
-  # Function app name
-  functionAppName: 'func-rkh-twittersar-dev'
-
   # ARM template location
-  armTemplateLocation: 'https://raw.githubusercontent.com/lp-code/AzTwitterSAR/master/infrastructure/'
+  armTemplateLocation: '$(System.DefaultWorkingDirectory)/infrastructure'
 
   # Agent VM image name
   vmImageName: vs2017-win2016
@@ -41,39 +37,46 @@ stages:
       displayName: 'Restore project dependencies'
       inputs:
         command: 'restore'
-        projects: $(workingDirectory)/*.csproj
+        projects: '**/*.csproj'
 
     - task: DotNetCoreCLI@2
       displayName: Build step dotnetcore
       inputs:
         command: 'build'
-        projects: |
-          $(workingDirectory)/*.csproj
+        projects: '**/*.csproj'
         arguments: --no-restore --configuration $(buildConfiguration)
+
+    - task: DotNetCoreCLI@2
+      displayName: Run tests
+      inputs:
+        command: test
+        projects: '**/*Tests/*.csproj'
+        arguments: '--configuration $(buildConfiguration)'
+
+    - powershell: Tree /F
+      workingDirectory: 'D:\a\1\s\'
 
     - task: DotNetCoreCLI@2
       displayName: 'Publish the project - $(buildConfiguration)'
       inputs:
         command: 'publish'
-        projects: $(workingDirectory)/*.csproj
+        projects: 'DurableAzTwitterSar/DurableAzTwitterSar.csproj'
+        arguments: '--no-build --configuration $(buildConfiguration) -o $(Build.ArtifactStagingDirectory)/$(Build.BuildId)'
         publishWebProjects: false
-        arguments: '--no-build --configuration $(buildConfiguration) --output $(System.DefaultWorkingDirectory)/$(buildConfiguration)'
         zipAfterPublish: true
+        modifyOutputPath: true
+    
+    - powershell: Tree /F 
+      workingDirectory: 'D:\a\1\s\'
 
-    - task: ArchiveFiles@2
-      displayName: 'Archive files'
-      inputs:
-        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/$(buildConfiguration)'
-        includeRootFolder: false
-        archiveType: zip
-        archiveFile: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
-        replaceExistingArchive: true
+    - publish: '$(Build.ArtifactStagingDirectory)'
+      artifact: 'drop'
 
-    - publish: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
-      artifact: drop
+    - powershell: Tree /F
+      workingDirectory: $(Build.ArtifactStagingDirectory)
 
-- stage: CreateCloudResources
-  displayName: Create cloud resources
+- stage: CreateCloudResources_Test
+  displayName: Create cloud resources in the test-rg
   dependsOn: Build
 
   jobs:
@@ -84,25 +87,26 @@ stages:
     - task: AzureResourceGroupDeployment@2
       displayName: 'Deploy template'
       inputs:
-        ConnectedServiceName: 'ConnectDevopsToAzure_rg-rkh-twittersarvestpd-dev'
+        ConnectedServiceName: 'ConnectDevopsToAzure_rg-rkh-twittersarvestpd-test'
         action: 'Create Or Update Resource Group'
-        resourceGroupName: 'rg-rkh-twittersarvestpd-dev'
+        resourceGroupName: 'rg-rkh-twittersarvestpd-test'
         location: 'norwayeast'
-        templateLocation: 'URL of the file'
-        csmFileLink: '$(armTemplateLocation)aztwittersar_template.json'
-        csmParametersFileLink: '$(armTemplateLocation)aztwittersar_parameters.json'
+        templateLocation: 'Linked artifact'
+        csmFile: '$(armTemplateLocation)/aztwittersar_template.json'
+        csmParametersFile: '$(armTemplateLocation)/aztwittersar_parameters.json'
+        overrideParameters: -env test
         deploymentMode: 'Complete'
         deploymentName: 'AzTwitterSAR-Pipeline'
 
-- stage: Deploy
-  displayName: Deploy stage
-  dependsOn: Build
+- stage: Deploy_Test
+  displayName: Deploy to the test-rg
+  dependsOn: ['Build', 'CreateCloudResources_Test']
   condition: succeeded()
 
   jobs:
   - deployment: Deploy
     displayName: Deploy
-    environment: 'development'
+    environment: test
     pool:
       vmImage: $(vmImageName)
 
@@ -111,10 +115,64 @@ stages:
         deploy:
 
           steps:
+          - download: current
+            artifact: drop
           - task: AzureFunctionApp@1
-            displayName: 'Azure functions app deploy'
+            displayName: 'Azure function app deploy'
             inputs:
               azureSubscription: '$(azureSubscription)'
               appType: functionApp
-              appName: $(functionAppName)
-              package: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
+              appName: 'func-rkh-twittersar-test'
+              package: '$(Pipeline.Workspace)/drop/**/*.zip'
+              deploymentMethod: runFromPackage
+
+- stage: CreateCloudResources_Prod
+  displayName: Create cloud resources in the prod-rg
+  dependsOn: ['Build', 'Deploy_Test']
+
+  jobs:
+  - job: Create
+    displayName: Create
+    
+    steps:
+    - task: AzureResourceGroupDeployment@2
+      displayName: 'Deploy template'
+      inputs:
+        ConnectedServiceName: 'ConnectDevopsToAzure_rg-rkh-twittersarvestpd-prod'
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: 'rg-rkh-twittersarvestpd-prod'
+        location: 'norwayeast'
+        templateLocation: 'Linked artifact'
+        csmFile: '$(armTemplateLocation)/aztwittersar_template.json'
+        csmParametersFile: '$(armTemplateLocation)/aztwittersar_parameters.json'
+        overrideParameters: -env prod
+        deploymentMode: 'Complete'
+        deploymentName: 'AzTwitterSAR-Pipeline'
+
+- stage: Deploy_prod
+  displayName: Deploy to the prod-rg
+  dependsOn: ['Build', 'Deploy_Test', 'CreateCloudResources_Prod']
+  condition: succeeded()
+
+  jobs:
+  - deployment: Deploy
+    displayName: Deploy
+    environment: prod
+    pool:
+      vmImage: $(vmImageName)
+
+    strategy:
+      runOnce:
+        deploy:
+
+          steps:
+          - download: current
+            artifact: drop
+          - task: AzureFunctionApp@1
+            displayName: 'Azure function app deploy'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: functionApp
+              appName: 'func-rkh-twittersar-prod'
+              package: '$(Pipeline.Workspace)/drop/**/*.zip'
+              deploymentMethod: runFromPackage
