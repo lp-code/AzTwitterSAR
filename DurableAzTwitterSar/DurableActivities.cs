@@ -12,6 +12,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Tweetinvi;
+using Tweetinvi.Models;
 using Tweetinvi.Parameters;
 
 namespace DurableAzTwitterSar
@@ -44,9 +45,13 @@ namespace DurableAzTwitterSar
                 SinceId = long.Parse(lastTweetId)
             };
 
+            IEnumerable<ITweet> tweets = await SearchAsync.SearchTweets(searchParameter);
+            if (tweets is null)
+            {
+                log.LogWarning($"A_GetTweets: Twitter connection failure. Return no tweets and retry in next cycle.");
+                tweets = new List<ITweet>();
+            }
             // Since the further processing can scramble the order again, we don't need to sort here.
-            var tweets = await SearchAsync.SearchTweets(searchParameter);
-            //var tweets = Search.SearchTweets(searchParameter);
 
             List<TweetProcessingData> tpds = new List<TweetProcessingData>();
             foreach (var tweet in tweets)
