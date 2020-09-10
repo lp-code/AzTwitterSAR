@@ -31,9 +31,7 @@ namespace DurableAzTwitterSar
             log.LogDebug($"Starting orchestration for lastTweetId: {lastTweetId}");
 
             // Function input comes from the request content.
-            //string orchestrationId = await starter.StartNewAsync("O_MainOrchestrator", lastTweetId);
             string orchestrationId = await starter.StartNewAsync<string>("O_MainOrchestrator", lastTweetId);
-
 
             return starter.CreateCheckStatusResponse(req, orchestrationId);
         }

@@ -165,31 +165,6 @@ namespace DurableAzTwitterSar
             return 0;
         }
 
-        [FunctionName("A_GetDelaySeconds")]
-        public static int GetDelaySeconds([ActivityTrigger] DateTime startTime, ILogger log)
-        {
-            log.LogInformation("A_GetDelaySeconds: Start.");
-            DateTime currentTime = DateTime.UtcNow;
-
-            const int targetSecondsBetweenRuns = 60;
-            const int minimumSecondsBetweenRuns = 30;
-
-
-            bool envVarSet = Int32.TryParse(Environment.GetEnvironmentVariable("AZTWITTERSAR_ACTIVE"), out int envVarValue);
-            bool active = envVarSet && (envVarValue == 1);
-
-            int delaySeconds = 0;
-            if (active)
-            {
-                delaySeconds = Math.Max(
-                    targetSecondsBetweenRuns - (int)(currentTime - startTime).TotalSeconds,
-                    minimumSecondsBetweenRuns);
-            }
-            log.LogInformation($"A_GetDelaySeconds: Done, determined delay is {delaySeconds} seconds.");
-
-            return delaySeconds;
-        }
-
         [FunctionName("A_LogTweets")]
         public static async Task<int> LogTweets([ActivityTrigger] List<TweetProcessingData> tpds, ILogger log)
         {
