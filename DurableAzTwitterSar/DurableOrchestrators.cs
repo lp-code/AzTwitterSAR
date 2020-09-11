@@ -19,7 +19,7 @@ namespace DurableAzTwitterSar
         {
             DateTime startTime = context.CurrentUtcDateTime;
             if (!context.IsReplaying)
-                log.LogInformation($"Main orchestrator, start time {startTime}. Call activity: GetTweets");
+                log.LogInformation($"Main orchestrator (v{AzTwitterSarVersion.get()}), start time {startTime}. Call activity: GetTweets");
 
             string lastTweetId = context.GetInput<string>();
 

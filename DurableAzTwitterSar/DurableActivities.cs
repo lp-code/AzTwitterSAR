@@ -81,7 +81,8 @@ namespace DurableAzTwitterSar
         {
             log.LogInformation("A_GetBusinessLogicScore: Start.");
             string highlightedText;
-            double score = TweetAnalysis.ScoreTweet(textWithoutTags, out highlightedText);
+            double score = TweetAnalysis.ScoreTweet(textWithoutTags,
+                                                    out highlightedText);
             double minScoreBL = TweetAnalysis.GetScoreFromEnv("AZTWITTERSAR_MINSCORE", log, 0.01f);
             
             PublishLabel label = PublishLabel.Negative;
@@ -151,7 +152,7 @@ namespace DurableAzTwitterSar
                     slackMsg += $"@channel\n";
                 slackMsg +=
                     $"{tpd.FullText}\n"
-                    + $"Score (v3.0): {tpd.Score.ToString("F", CultureInfo.InvariantCulture)}, "
+                    + $"Score (v{AzTwitterSarVersion.get()}): {tpd.Score.ToString("F", CultureInfo.InvariantCulture)}, "
                     + $"ML ({tpd.VersionML}): {tpd.ScoreML.ToString("F", CultureInfo.InvariantCulture)}\n"
                     + $"Link: http://twitter.com/politivest/status/{tpd.IdStr}";
 
