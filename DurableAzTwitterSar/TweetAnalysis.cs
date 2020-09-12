@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using Tweetinvi.Models.Entities;
@@ -182,17 +183,18 @@ namespace DurableAzTwitterSar
         public static float GetScoreFromEnv(string envVarName, ILogger log, float defaultScore)
         {
             float score = defaultScore;
+            string min_score_string = "";
             try
             {
-                string min_score_string = Environment.GetEnvironmentVariable(envVarName);
-                score = float.Parse(min_score_string);
+                min_score_string = Environment.GetEnvironmentVariable(envVarName);
+                score = float.Parse(min_score_string, NumberStyles.Any, CultureInfo.InvariantCulture);
                 log.LogInformation($"Got score from environment variable {envVarName}: "
-                    + "{score}.");
+                    + $"{score}.");
             }
             catch
             {
                 log.LogInformation($"Getting score from environment variable {envVarName}"
-                    + " failed, using default: {score}.");
+                    + $" with value '{min_score_string}' failed, using default: {score}.");
             }
             return score;
         }

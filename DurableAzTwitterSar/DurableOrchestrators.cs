@@ -10,8 +10,6 @@ using System.Threading.Tasks;
 
 namespace DurableAzTwitterSar
 {
-
-
     public static class DurableOrchestrators
     {
         [FunctionName("O_MainOrchestrator")]
@@ -21,7 +19,7 @@ namespace DurableAzTwitterSar
         {
             DateTime startTime = context.CurrentUtcDateTime;
             if (!context.IsReplaying)
-                log.LogInformation($"Main orchestrator, start time {startTime}. Call activity: GetTweets");
+                log.LogInformation($"Main orchestrator (v{AzTwitterSarVersion.get()}), start time {startTime}. Call activity: GetTweets");
 
             string lastTweetId = context.GetInput<string>();
 
@@ -87,15 +85,17 @@ namespace DurableAzTwitterSar
                     log.LogInformation($"Got no new tweets.");
             }
 
-            int delaySeconds = await context.CallActivityAsync<int>(
-                "A_GetDelaySeconds", startTime);
+            DateTime currentTime = context.CurrentUtcDateTime;
+            int delaySeconds = GetDelaySeconds(context, log, startTime, currentTime);
 
             if (!context.IsReplaying)
-                log.LogInformation($"Determined delay: {delaySeconds} seconds after start time {startTime}.");
+                log.LogInformation($"Determined delay: {delaySeconds} seconds after current time {currentTime}.");
 
             if (delaySeconds > 0)
             {
-                DateTime nextTime = startTime.AddSeconds(delaySeconds);
+                DateTime nextTime = currentTime.AddSeconds(delaySeconds);
+                if (!context.IsReplaying)
+                    log.LogInformation($"Setting wakeup time: {nextTime}.");
                 await context.CreateTimer(nextTime, CancellationToken.None);
                 context.ContinueAsNew(lastTweetId);
             }
@@ -149,5 +149,38 @@ namespace DurableAzTwitterSar
 
             return tpd;
         } // func
+
+        private static int GetDelaySeconds(
+            IDurableOrchestrationContext context, ILogger log,
+            DateTime startTime, DateTime currentTime)
+        {
+            if (!context.IsReplaying)
+                log.LogInformation("GetDelaySeconds: Start.");
+
+            int runtimeSeconds = (int) (currentTime - startTime).TotalSeconds;
+
+            int targetSecondsBetweenRuns = 45;  // This results in ca. one minute.
+            int hr = currentTime.ToLocalTime().Hour;
+            if (hr >= 1 && hr <= 6)
+                targetSecondsBetweenRuns = 180;
+            const int minimumSecondsBetweenRuns = 30;
+
+            bool envVarSet = Int32.TryParse(Environment.GetEnvironmentVariable("AZTWITTERSAR_ACTIVE"), out int envVarValue);
+            bool active = envVarSet && (envVarValue == 1);
+
+            int delaySeconds = 0;
+            if (active)
+            {
+                delaySeconds = Math.Max(
+                    targetSecondsBetweenRuns - runtimeSeconds,
+                    minimumSecondsBetweenRuns);
+            }
+            if (!context.IsReplaying)
+                log.LogInformation($"GetDelaySeconds: Done, determined delay is {delaySeconds} seconds.");
+
+            return delaySeconds;
+        }
+
+
     }
 }

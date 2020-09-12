@@ -12,6 +12,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Tweetinvi;
+using Tweetinvi.Models;
 using Tweetinvi.Parameters;
 
 namespace DurableAzTwitterSar
@@ -44,9 +45,13 @@ namespace DurableAzTwitterSar
                 SinceId = long.Parse(lastTweetId)
             };
 
+            IEnumerable<ITweet> tweets = await SearchAsync.SearchTweets(searchParameter);
+            if (tweets is null)
+            {
+                log.LogWarning($"A_GetTweets: Twitter connection failure. Return no tweets and retry in next cycle.");
+                tweets = new List<ITweet>();
+            }
             // Since the further processing can scramble the order again, we don't need to sort here.
-            var tweets = await SearchAsync.SearchTweets(searchParameter);
-            //var tweets = Search.SearchTweets(searchParameter);
 
             List<TweetProcessingData> tpds = new List<TweetProcessingData>();
             foreach (var tweet in tweets)
@@ -76,7 +81,8 @@ namespace DurableAzTwitterSar
         {
             log.LogInformation("A_GetBusinessLogicScore: Start.");
             string highlightedText;
-            double score = TweetAnalysis.ScoreTweet(textWithoutTags, out highlightedText);
+            double score = TweetAnalysis.ScoreTweet(textWithoutTags,
+                                                    out highlightedText);
             double minScoreBL = TweetAnalysis.GetScoreFromEnv("AZTWITTERSAR_MINSCORE", log, 0.01f);
             
             PublishLabel label = PublishLabel.Negative;
@@ -146,7 +152,7 @@ namespace DurableAzTwitterSar
                     slackMsg += $"@channel\n";
                 slackMsg +=
                     $"{tpd.FullText}\n"
-                    + $"Score (v3.0): {tpd.Score.ToString("F", CultureInfo.InvariantCulture)}, "
+                    + $"Score (v{AzTwitterSarVersion.get()}): {tpd.Score.ToString("F", CultureInfo.InvariantCulture)}, "
                     + $"ML ({tpd.VersionML}): {tpd.ScoreML.ToString("F", CultureInfo.InvariantCulture)}\n"
                     + $"Link: http://twitter.com/politivest/status/{tpd.IdStr}";
 
@@ -158,31 +164,6 @@ namespace DurableAzTwitterSar
             log.LogInformation($"A_PublishTweets: Done.");
 
             return 0;
-        }
-
-        [FunctionName("A_GetDelaySeconds")]
-        public static int GetDelaySeconds([ActivityTrigger] DateTime startTime, ILogger log)
-        {
-            log.LogInformation("A_GetDelaySeconds: Start.");
-            DateTime currentTime = DateTime.UtcNow;
-
-            const int targetSecondsBetweenRuns = 60;
-            const int minimumSecondsBetweenRuns = 30;
-
-
-            bool envVarSet = Int32.TryParse(Environment.GetEnvironmentVariable("AZTWITTERSAR_ACTIVE"), out int envVarValue);
-            bool active = envVarSet && (envVarValue == 1);
-
-            int delaySeconds = 0;
-            if (active)
-            {
-                delaySeconds = Math.Max(
-                    targetSecondsBetweenRuns - (int)(currentTime - startTime).TotalSeconds,
-                    minimumSecondsBetweenRuns);
-            }
-            log.LogInformation($"A_GetDelaySeconds: Done, determined delay is {delaySeconds} seconds.");
-
-            return delaySeconds;
         }
 
         [FunctionName("A_LogTweets")]
