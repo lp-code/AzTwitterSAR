@@ -8,19 +8,26 @@ trigger:
 
 variables:
   # Build configuration setting
-  buildConfiguration: 'Debug'
+  - name: buildConfiguration
+    value: 'Debug'
 
   # Azure Resource Manager connection created during pipeline creation
-  azureSubscription: '45a6fef4-d860-401b-9ec2-7d6c0101f1f0'
+  - name: azureSubscription
+    value: '45a6fef4-d860-401b-9ec2-7d6c0101f1f0'
 
   # ARM template location
-  armTemplateLocation: '$(System.DefaultWorkingDirectory)/infrastructure'
+  - name: armTemplateLocation
+    value: '$(System.DefaultWorkingDirectory)/infrastructure'
 
   # Agent VM image name
-  vmImageName: vs2017-win2016
+  - name: vmImageName
+    value: vs2017-win2016
 
   # Working Directory
-  workingDirectory: '$(System.DefaultWorkingDirectory)/azTwitterSar'
+  - name: workingDirectory
+    value: '$(System.DefaultWorkingDirectory)/azTwitterSar'
+
+  - group: 'AzTwitterSAR Deployment pipeline variables'
 
 stages:
 - stage: Build
@@ -94,7 +101,7 @@ stages:
         templateLocation: 'Linked artifact'
         csmFile: '$(armTemplateLocation)/aztwittersar_template.json'
         csmParametersFile: '$(armTemplateLocation)/aztwittersar_parameters.json'
-        overrideParameters: -env test
+        overrideParameters: -env test -alertEmailAddress $(alertEmailAddress)
         deploymentMode: 'Complete'
         deploymentName: 'AzTwitterSAR-Pipeline'
 
@@ -145,7 +152,7 @@ stages:
         templateLocation: 'Linked artifact'
         csmFile: '$(armTemplateLocation)/aztwittersar_template.json'
         csmParametersFile: '$(armTemplateLocation)/aztwittersar_parameters.json'
-        overrideParameters: -env prod
+        overrideParameters: -env prod -alertEmailAddress $(alertEmailAddress)
         deploymentMode: 'Complete'
         deploymentName: 'AzTwitterSAR-Pipeline'
 

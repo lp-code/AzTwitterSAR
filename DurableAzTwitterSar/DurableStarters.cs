@@ -35,5 +35,40 @@ namespace DurableAzTwitterSar
 
             return starter.CreateCheckStatusResponse(req, orchestrationId);
         }
+
+        [FunctionName("S_HttpStartSingle")]
+        public static async Task<HttpResponseMessage> HttpStartSingle(
+            [HttpTrigger(AuthorizationLevel.Function, methods: "post", Route = "orchestrators/{functionName}/{instanceId}")] HttpRequestMessage req,
+            [DurableClient] IDurableOrchestrationClient starter,
+            string functionName,
+            string instanceId,
+            ILogger log)
+        {
+            // Check if an instance with the specified ID already exists.
+            var existingInstance = await starter.GetStatusAsync(instanceId);
+            if (existingInstance == null)
+            {
+                // An instance with the specified ID doesn't exist, create one.
+
+                // Get the id of the last tweet treated previously, as specified in the http request.
+                string lastTweetId = req.RequestUri.ParseQueryString()["lastTweetId"];
+                if (lastTweetId == null)
+                {
+                    return req.CreateResponse(HttpStatusCode.BadRequest, "Please pass lastTweetId in the query string.");
+                }
+                
+                await starter.StartNewAsync(functionName, instanceId, lastTweetId);
+                log.LogInformation($"Started orchestration with ID = '{instanceId}'.");
+                return starter.CreateCheckStatusResponse(req, instanceId);
+            }
+            else
+            {
+                // An instance with the specified ID exists, don't create one.
+                return new HttpResponseMessage(HttpStatusCode.Conflict)
+                {
+                    Content = new StringContent($"An instance with ID '{instanceId}' already exists."),
+                };
+            }
+        }
     }
 }

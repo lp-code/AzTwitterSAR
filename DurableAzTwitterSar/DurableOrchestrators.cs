@@ -159,6 +159,9 @@ namespace DurableAzTwitterSar
 
             int runtimeSeconds = (int) (currentTime - startTime).TotalSeconds;
 
+            // There is a bug in the durable function sleep/schedule routine so that it
+            // restarts later than scheduled:
+            // https://github.com/Azure/azure-functions-durable-extension/issues/1395
             int targetSecondsBetweenRuns = 45;  // This results in ca. one minute.
             int hr = currentTime.ToLocalTime().Hour;
             if (hr >= 1 && hr <= 6)
