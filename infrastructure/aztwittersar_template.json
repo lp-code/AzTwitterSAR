@@ -20,6 +20,9 @@
                 "description": "Specify the environment name (dev, prod)."
             }
         },
+        "alertEmailAddress": {
+            "type": "string"
+        },
         "_utcValue": {
             "type": "string",
             "defaultValue": "[utcNow()]"
@@ -36,6 +39,10 @@
         },
         "timezone": "UTC",
         "runtimeStack": "dotnet",
+        "actionGroups_actiongroupemail_name": "actiongroupEmailLars",
+        "metricAlerts_func_rkh_twittersar_down_name": "[concat('func-rkh-twittersar-', parameters('env'), '-is-down')]",
+        "sites_func_rkh_twittersar_externalid": "[concat(resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('functionAppName'))]",
+        "actiongroups_actiongroupemail_externalid": "[concat(resourceGroup().id, '/providers/microsoft.insights/actiongroups/', variables('actionGroups_actiongroupemail_name'))]",
 		"tags": {
 		  "Environment": "[toUpper(parameters('env'))]",
 		  "LastDeployment": "[parameters('_utcValue')]"
@@ -156,6 +163,74 @@
             "properties": {
                 "ApplicationId": "[variables('functionAppName')]",
 				"RetentionInDays": 30
+            }
+        },
+        {
+            "type": "microsoft.insights/actionGroups",
+            "apiVersion": "2019-03-01",
+            "name": "[variables('actionGroups_actiongroupemail_name')]",
+            "location": "Global",
+            "properties": {
+                "groupShortName": "agEmail",
+                "enabled": true,
+                "emailReceivers": [
+                    {
+                        "name": "EmailAction",
+                        "emailAddress": "[parameters('alertEmailAddress')]",
+                        "useCommonAlertSchema": true
+                    }
+                ],
+                "smsReceivers": [],
+                "webhookReceivers": [],
+                "itsmReceivers": [],
+                "azureAppPushReceivers": [],
+                "automationRunbookReceivers": [],
+                "voiceReceivers": [],
+                "logicAppReceivers": [],
+                "azureFunctionReceivers": []
+            }
+        },
+        {
+            "type": "microsoft.insights/metricAlerts",
+            "apiVersion": "2018-03-01",
+            "name": "[variables('metricAlerts_func_rkh_twittersar_down_name')]",
+            "location": "global",
+            "dependsOn": [
+                "[resourceId('microsoft.insights/actionGroups', variables('actionGroups_actiongroupemail_name'))]",
+                "[variables('sites_func_rkh_twittersar_externalid')]"
+            ],
+            "properties": {
+                "severity": 3,
+                "enabled": true,
+                "scopes": [
+                    "[variables('sites_func_rkh_twittersar_externalid')]"
+                ],
+                "evaluationFrequency": "PT5M",
+                "windowSize": "PT5M",
+                "criteria": {
+                    "allOf": [
+                        {
+                            "threshold": 1,
+                            "name": "Metric1",
+                            "metricNamespace": "Microsoft.Web/sites",
+                            "metricName": "FunctionExecutionCount",
+                            "dimensions": [],
+                            "operator": "LessThan",
+                            "timeAggregation": "Total",
+                            "criterionType": "StaticThresholdCriterion"
+                        }
+                    ],
+                    "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria"
+                },
+                "autoMitigate": true,
+                "targetResourceType": "Microsoft.Web/sites",
+                "actions": [
+                    {
+                        "actionGroupId": "[variables('actiongroups_actiongroupemail_externalid')]",
+                        "webHookProperties": {}
+                    }
+                ],
+                "description": "Alert if the function has stopped."
             }
         }
     ],
