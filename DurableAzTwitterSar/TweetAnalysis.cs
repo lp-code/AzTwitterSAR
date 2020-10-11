@@ -22,6 +22,7 @@ namespace DurableAzTwitterSar
             "teaksjon", // le-, lei-
             "leite", "leting", "leter", "søk",
             "redningsaksjon", "redning", "redningsoppdrag",
+            "redde", "redda", // see exceptions list below
             "bekymringsmelding", "borte", "sist sett", // "sist sett" vil ikke matche enkeltord!
             "værfast",
             "helikopter", "chc", "luftamb",
@@ -65,6 +66,7 @@ namespace DurableAzTwitterSar
             "skredestranda",
             "kveldsfesteskredo",
             "skredhaugen",
+            "bredder", "opptredd", "livredd" // redde/a
         };
         // discard completely: "Trolltunga"
 
