@@ -140,6 +140,7 @@ stages:
   jobs:
   - job: Create
     displayName: Create
+    environment: prod
     
     steps:
     - task: AzureResourceGroupDeployment@2
