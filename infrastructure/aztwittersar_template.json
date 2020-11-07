@@ -143,7 +143,7 @@
             "name": "[concat(variables('keyVaultName'), '/', variables('keyVaultSecretsFromPipeline').secrets[copyIndex()].name)]",
             "apiVersion": "2019-09-01",
             "dependsOn": [
-                "[concat('Microsoft.KeyVault/vaults/', variables('keyVaultName'))]",
+                "[concat('Microsoft.KeyVault/vaults/', variables('keyVaultName'))]"
             ],
             "properties": {
                 "value": "[variables('keyVaultSecretsFromPipeline').secrets[copyIndex()].value]",
@@ -180,7 +180,7 @@
                         },
                         {
                             "name": "AZTWITTERSAR_ACTIVE",
-                            "value": "1",
+                            "value": "1"
                         },
                         {
                             "name": "AZTWITTERSAR_MINSCORE",
@@ -298,7 +298,7 @@
                 "attributes": {
                     "enabled": "true"
                 }
-            },
+            }
         },
         {
             "apiVersion": "2018-05-01-preview",
@@ -326,7 +326,7 @@
                 "attributes": {
                     "enabled": "true"
                 }
-            },
+            }
         },
         {
             "type": "microsoft.insights/actionGroups",

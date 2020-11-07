@@ -133,14 +133,23 @@ stages:
               package: '$(Pipeline.Workspace)/drop/**/*.zip'
               deploymentMethod: runFromPackage
 
+- stage: PreDeploy_prod
+  displayName: Pause the pipeline before infrastructure provisioning to prod, wait for approval
+  dependsOn: ['Build', 'Deploy_Test']
+  condition: succeeded()
+
+  jobs:
+  - deployment: Deploy
+    displayName: Deploy
+    environment: prod
+
 - stage: CreateCloudResources_Prod
   displayName: Create cloud resources in the prod-rg
-  dependsOn: ['Build', 'Deploy_Test']
+  dependsOn: ['Build', 'Deploy_Test', 'PreDeploy_prod']
 
   jobs:
   - job: Create
     displayName: Create
-    environment: prod
     variables:
     - group: 'AzTwitterSAR PROD Deployment pipeline variables'
     
