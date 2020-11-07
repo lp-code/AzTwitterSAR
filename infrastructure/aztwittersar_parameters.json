@@ -10,6 +10,14 @@
         },
         "alertEmailAddress": {
             "value": ""
+        },
+        "keyVaultSecrets": {
+            "value": {
+                "secrets" : [
+                    { "name" : "mySecretName1", "value" : "super secret", "contentType" : "myContentType" },
+                    { "name" : "mySecretName2", "value" : "super duper secret", "contentType" : "myContentType"}
+                ]
+            }
         }
     }
 }

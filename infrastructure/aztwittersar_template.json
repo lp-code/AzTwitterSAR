@@ -21,7 +21,32 @@
             }
         },
         "alertEmailAddress": {
-            "type": "string"
+            "type": "securestring"
+        },
+        "MonitoredTwitterAccount": {
+            "type": "string",
+            "defaultValue": "politivest",
+            "metadata": {
+                "description": "The Twitter account name to monitor."
+            }
+        },
+        "AZTWITTERSAR_AI_URI": {
+            "type": "securestring"
+        },
+        "AZTWITTERSAR_SLACKHOOK": {
+            "type": "securestring"
+        },
+        "TwitterAccessToken": {
+            "type": "securestring"
+        },
+        "TwitterAccessTokenSecret": {
+            "type": "securestring"
+        },
+        "TwitterApiKey": {
+            "type": "securestring"
+        },
+        "TwitterApiSecretKey": {
+            "type": "securestring"
         },
         "_utcValue": {
             "type": "string",
@@ -29,6 +54,7 @@
         }
     },
     "variables": {
+        "keyVaultName": "[concat('kv-', parameters('mainName'), '-', parameters('env'))]",
         "functionAppName": "[concat('func-', parameters('mainName'), '-', parameters('env'))]",
         "hostingPlanName": "[concat('plan-', parameters('mainName'), '-', parameters('env'))]",
         "location": "[resourceGroup().location]",
@@ -43,12 +69,93 @@
         "metricAlerts_func_rkh_twittersar_down_name": "[concat('func-rkh-twittersar-', parameters('env'), '-is-down')]",
         "sites_func_rkh_twittersar_externalid": "[concat(resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('functionAppName'))]",
         "actiongroups_actiongroupemail_externalid": "[concat(resourceGroup().id, '/providers/microsoft.insights/actiongroups/', variables('actionGroups_actiongroupemail_name'))]",
+        "keyVaultSecretsFromPipeline": {
+            "secrets" : [
+                {
+                    "name": "AzTwitterSarAiUri",
+                    "value": "[parameters('AZTWITTERSAR_AI_URI')]"
+                },
+                {
+                    "name": "AzTwitterSarSlackHook",
+                    "value": "[parameters('AZTWITTERSAR_SLACKHOOK')]"
+                },
+                {
+                    "name": "TwitterAccessToken",
+                    "value": "[parameters('TwitterAccessToken')]"
+                },
+                {
+                    "name": "TwitterAccessTokenSecret",
+                    "value": "[parameters('TwitterAccessTokenSecret')]"
+                },
+                {
+                    "name": "TwitterApiKey",
+                    "value": "[parameters('TwitterApiKey')]"
+                },
+                {
+                    "name": "TwitterApiSecretKey",
+                    "value": "[parameters('TwitterApiSecretKey')]"
+                }
+            ]
+        },
 		"tags": {
 		  "Environment": "[toUpper(parameters('env'))]",
 		  "LastDeployment": "[parameters('_utcValue')]"
 		}
     },
     "resources": [
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "name": "[variables('keyVaultName')]",
+            "apiVersion": "2019-09-01",
+            "location": "[variables('location')]",
+            "tags": "[variables('tags')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+            ],
+            "properties": {
+                "enabledForDeployment": false,
+                "enabledForDiskEncryption": false,
+                "enabledForTemplateDeployment": true,
+                "enableSoftDelete": true,
+                "softDeleteRetentionInDays": 30,
+                "tenantId": "[subscription().tenantId]",
+                "sku": {
+                    "name": "Standard",
+                    "family": "A"
+                },
+                "networkAcls": {
+                    "defaultAction": "Allow",
+                    "bypass": "AzureServices"
+                },
+                "accessPolicies": [
+                    {
+                        "tenantId": "[subscription().tenantId]",
+                        "objectId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2019-08-01', 'Full').identity.principalId]",
+                        "permissions": {
+                            "secrets": ["get"]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults/secrets",
+            "name": "[concat(variables('keyVaultName'), '/', variables('keyVaultSecretsFromPipeline').secrets[copyIndex()].name)]",
+            "apiVersion": "2019-09-01",
+            "dependsOn": [
+                "[concat('Microsoft.KeyVault/vaults/', variables('keyVaultName'))]",
+            ],
+            "properties": {
+                "value": "[variables('keyVaultSecretsFromPipeline').secrets[copyIndex()].value]",
+                "attributes": {
+                    "enabled": "true"
+                }
+            },
+            "copy": {
+                "name": "keyVaultSecretsFromPipeline",
+                "count": "[length(variables('keyVaultSecretsFromPipeline').secrets)]"
+            }
+        },
         {
             "name": "[variables('functionAppName')]",
             "type": "Microsoft.Web/sites",
@@ -68,28 +175,78 @@
                 "siteConfig": {
                     "appSettings": [
                         {
-                            "name": "FUNCTIONS_WORKER_RUNTIME",
-                            "value": "[variables('runtimeStack')]"
+                            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                            "value": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/AppInsightsInstrumentationKey/)')]"
+                        },
+                        {
+                            "name": "AZTWITTERSAR_ACTIVE",
+                            "value": "1",
+                        },
+                        {
+                            "name": "AZTWITTERSAR_AI_URI",
+                            "value": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/AzTwitterSarAiUri/)')]"
+                        },
+                        {
+                            "name": "AZTWITTERSAR_MINSCORE",
+                            "value": "0.01"
+                        },
+                        {
+                            "name": "AZTWITTERSAR_MINSCORE_ALERT",
+                            "value": "0.09"
+                        },
+                        {
+                            "name": "AZTWITTERSAR_SLACKHOOK",
+                            "value": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/AzTwitterSarSlackHook/)')]"
                         },
                         {
                             "name": "AzureWebJobsStorage",
-                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value)]"
+                            "value": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/StorageAccountConnectionString/)')]"
                         },
                         {
                             "name": "FUNCTIONS_EXTENSION_VERSION",
                             "value": "~3"
                         },
                         {
-                            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
-                            "value": "[reference(resourceId('microsoft.insights/components', variables('functionAppName')), '2018-05-01-preview').InstrumentationKey]"
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                            "value": "[variables('runtimeStack')]"
+                        },
+                        {
+                            "name": "MonitoredTwitterAccount",
+                            "value": "[parameters('MonitoredTwitterAccount')]"
+                        },
+                        {
+                            "name": "TwitterAccessToken",
+                            "value": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/TwitterAccessToken/)')]"
+                        },
+                        {
+                            "name": "TwitterAccessTokenSecret",
+                            "value": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/TwitterAccessTokenSecret/)')]"
+                        },
+                        {
+                            "name": "TwitterApiKey",
+                            "value": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/TwitterApiKey/)')]"
+                        },
+                        {
+                            "name": "TwitterApiSecretKey",
+                            "value": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/TwitterApiSecretKey/)')]"
                         },
                         {
                             "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            // The following keyvault reference does not work, specifically for WEBSITE_CONTENTAZUREFILECONNECTIONSTRING.
+                            //"value": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/StorageAccountConnectionString/)')]"
                             "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')),'2019-06-01').keys[0].value)]"
                         },
                         {
                             "name": "WEBSITE_CONTENTSHARE",
                             "value": "[toLower(variables('functionAppName'))]"
+                        },
+                        {
+                            "name": "WEBSITE_ENABLE_SYNC_UPDATE_SITE",
+                            "value": "true"
+                        },
+                        {
+                            "name": "WEBSITE_RUN_FROM_PACKAGE",
+                            "value": "1"
                         },
                         {
                             "name": "WEBSITE_TIME_ZONE",
@@ -153,6 +310,21 @@
 			  }
         },
         {
+            "type": "Microsoft.KeyVault/vaults/secrets",
+            "name": "[concat(variables('keyVaultName'), '/StorageAccountConnectionString')]",
+            "apiVersion": "2019-09-01",
+            "dependsOn": [
+                "[concat('Microsoft.KeyVault/vaults/', variables('keyVaultName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+            ],
+            "properties": {
+                "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')),'2019-06-01').keys[0].value)]",
+                "attributes": {
+                    "enabled": "true"
+                }
+            },
+        },
+        {
             "apiVersion": "2018-05-01-preview",
             "name": "[variables('functionAppName')]",
             "type": "Microsoft.Insights/components",
@@ -164,6 +336,21 @@
                 "ApplicationId": "[variables('functionAppName')]",
 				"RetentionInDays": 30
             }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults/secrets",
+            "name": "[concat(variables('keyVaultName'), '/AppInsightsInstrumentationKey')]",
+            "apiVersion": "2019-09-01",
+            "dependsOn": [
+                "[concat('Microsoft.KeyVault/vaults/', variables('keyVaultName'))]",
+                "[resourceId('microsoft.insights/components', variables('functionAppName'))]"
+            ],
+            "properties": {
+                "value": "[reference(resourceId('microsoft.insights/components', variables('functionAppName')), '2018-05-01-preview').InstrumentationKey]",
+                "attributes": {
+                    "enabled": "true"
+                }
+            },
         },
         {
             "type": "microsoft.insights/actionGroups",
