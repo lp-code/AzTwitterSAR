@@ -23,10 +23,12 @@ namespace DurableAzTwitterSar
         public static async Task<List<TweetProcessingData>> GetTweets([ActivityTrigger] string lastTweetId, ILogger log)
         {
             log.LogInformation($"A_GetTweets: Getting new tweets after {lastTweetId}.");
-            string apiKey = Environment.GetEnvironmentVariable("TwitterApiKey"); // aka consumer key
-            string apiSecretKey = Environment.GetEnvironmentVariable("TwitterApiSecretKey"); // aka consumer secret
-            string accessToken = Environment.GetEnvironmentVariable("TwitterAccessToken");
-            string accessTokenSecret = Environment.GetEnvironmentVariable("TwitterAccessTokenSecret");
+            KeyVaultAccessor kva = KeyVaultAccessor.GetInstance();
+            string apiKey = await kva.GetSecretAsync("TwitterApiKey"); // aka consumer key
+            string apiSecretKey = await kva.GetSecretAsync("TwitterApiSecretKey"); // aka consumer secret
+            string accessToken = await kva.GetSecretAsync("TwitterAccessToken");
+            string accessTokenSecret = await kva.GetSecretAsync("TwitterAccessTokenSecret");
+
             string monitoredTwitterAccount = Environment.GetEnvironmentVariable("MonitoredTwitterAccount");
 
             var userCredentials = Auth.SetUserCredentials(apiKey, apiSecretKey, accessToken, accessTokenSecret);
@@ -98,7 +100,7 @@ namespace DurableAzTwitterSar
         public static async Task<MlResult> GetMlScore([ActivityTrigger] string tweet, ILogger log)
         {
             log.LogInformation("A_GetMlScore: Start.");
-            string mlUriString = Environment.GetEnvironmentVariable("AZTWITTERSAR_AI_URI");
+            string mlUriString = await KeyVaultAccessor.GetInstance().GetSecretAsync("AzTwitterSarAiUri");
 
             MlResult result = new MlResult
             {

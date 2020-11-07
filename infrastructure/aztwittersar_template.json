@@ -183,20 +183,12 @@
                             "value": "1",
                         },
                         {
-                            "name": "AZTWITTERSAR_AI_URI",
-                            "value": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/AzTwitterSarAiUri/)')]"
-                        },
-                        {
                             "name": "AZTWITTERSAR_MINSCORE",
                             "value": "0.01"
                         },
                         {
                             "name": "AZTWITTERSAR_MINSCORE_ALERT",
                             "value": "0.09"
-                        },
-                        {
-                            "name": "AZTWITTERSAR_SLACKHOOK",
-                            "value": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/AzTwitterSarSlackHook/)')]"
                         },
                         {
                             "name": "AzureWebJobsStorage",
@@ -213,22 +205,6 @@
                         {
                             "name": "MonitoredTwitterAccount",
                             "value": "[parameters('MonitoredTwitterAccount')]"
-                        },
-                        {
-                            "name": "TwitterAccessToken",
-                            "value": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/TwitterAccessToken/)')]"
-                        },
-                        {
-                            "name": "TwitterAccessTokenSecret",
-                            "value": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/TwitterAccessTokenSecret/)')]"
-                        },
-                        {
-                            "name": "TwitterApiKey",
-                            "value": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/TwitterApiKey/)')]"
-                        },
-                        {
-                            "name": "TwitterApiSecretKey",
-                            "value": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/TwitterApiSecretKey/)')]"
                         },
                         {
                             "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
