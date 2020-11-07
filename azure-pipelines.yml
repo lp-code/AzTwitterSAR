@@ -27,8 +27,6 @@ variables:
   - name: workingDirectory
     value: '$(System.DefaultWorkingDirectory)/azTwitterSar'
 
-  - group: 'AzTwitterSAR Deployment pipeline variables'
-
 stages:
 - stage: Build
   displayName: Build AzTwitterSAR, release configuration
@@ -89,6 +87,8 @@ stages:
   jobs:
   - job: Create
     displayName: Create
+    variables:
+    - group: 'AzTwitterSAR TEST Deployment pipeline variables'
     
     steps:
     - task: AzureResourceGroupDeployment@2
@@ -141,6 +141,8 @@ stages:
   - job: Create
     displayName: Create
     environment: prod
+    variables:
+    - group: 'AzTwitterSAR PROD Deployment pipeline variables'
     
     steps:
     - task: AzureResourceGroupDeployment@2
