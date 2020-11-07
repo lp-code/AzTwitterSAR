@@ -203,6 +203,10 @@
                             "value": "[variables('runtimeStack')]"
                         },
                         {
+                            "name": "KEY_VAULT_NAME",
+                            "value": "[variables('keyVaultName')]"
+                        },
+                        {
                             "name": "MonitoredTwitterAccount",
                             "value": "[parameters('MonitoredTwitterAccount')]"
                         },
