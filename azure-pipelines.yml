@@ -164,7 +164,7 @@ stages:
         templateLocation: 'Linked artifact'
         csmFile: '$(armTemplateLocation)/aztwittersar_template.json'
         csmParametersFile: '$(armTemplateLocation)/aztwittersar_parameters.json'
-        overrideParameters: -env prod -alertEmailAddress $(alertEmailAddress)
+        overrideParameters: -env prod -alertEmailAddress $(alertEmailAddress) -AZTWITTERSAR_AI_URI $(AZTWITTERSAR_AI_URI) -AZTWITTERSAR_SLACKHOOK $(AZTWITTERSAR_SLACKHOOK) -TwitterAccessToken $(TwitterAccessToken) -TwitterAccessTokenSecret $(TwitterAccessTokenSecret) -TwitterApiKey $(TwitterApiKey) -TwitterApiSecretKey $(TwitterApiSecretKey)
         deploymentMode: 'Complete'
         deploymentName: 'AzTwitterSAR-Pipeline'
 
