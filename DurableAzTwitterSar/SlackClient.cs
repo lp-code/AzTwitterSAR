@@ -20,7 +20,7 @@ namespace DurableAzTwitterSar
         {
             log.LogInformation("PostSlackMessageAsync: enter.");
 
-            var slackWebHook = Environment.GetEnvironmentVariable("AZTWITTERSAR_SLACKHOOK");
+            var slackWebHook = await KeyVaultAccessor.GetInstance().GetSecretAsync("AzTwitterSarSlackHook");
 
             HttpClient httpClient = new HttpClient();
             httpClient.Timeout = TimeSpan.FromSeconds(30);

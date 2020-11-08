@@ -1,6 +1,6 @@
 # Connect-AzAccount
 
 New-AzResourceGroupDeployment `
-    -ResourceGroupName rg-rkh-twittersarvestpd-dev `
+    -ResourceGroupName rgTst `
     -TemplateFile .\aztwittersar_template.json `
-    -TemplateParameterFile .\aztwittersar_parameters.json
+    -TemplateParameterFile .\aztwittersar_parameters_secret.json

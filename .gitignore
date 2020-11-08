@@ -266,3 +266,4 @@ __pycache__/
 *.pubxml
 *.publishproj
 .vscode
+*secret*

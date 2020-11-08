@@ -27,8 +27,6 @@ variables:
   - name: workingDirectory
     value: '$(System.DefaultWorkingDirectory)/azTwitterSar'
 
-  - group: 'AzTwitterSAR Deployment pipeline variables'
-
 stages:
 - stage: Build
   displayName: Build AzTwitterSAR, release configuration
@@ -89,6 +87,8 @@ stages:
   jobs:
   - job: Create
     displayName: Create
+    variables:
+    - group: 'AzTwitterSAR TEST Deployment pipeline variables'
     
     steps:
     - task: AzureResourceGroupDeployment@2
@@ -101,7 +101,7 @@ stages:
         templateLocation: 'Linked artifact'
         csmFile: '$(armTemplateLocation)/aztwittersar_template.json'
         csmParametersFile: '$(armTemplateLocation)/aztwittersar_parameters.json'
-        overrideParameters: -env test -alertEmailAddress $(alertEmailAddress)
+        overrideParameters: -env test -alertEmailAddress $(alertEmailAddress) -AZTWITTERSAR_AI_URI $(AZTWITTERSAR_AI_URI) -AZTWITTERSAR_SLACKHOOK $(AZTWITTERSAR_SLACKHOOK) -TwitterAccessToken $(TwitterAccessToken) -TwitterAccessTokenSecret $(TwitterAccessTokenSecret) -TwitterApiKey $(TwitterApiKey) -TwitterApiSecretKey $(TwitterApiSecretKey)
         deploymentMode: 'Complete'
         deploymentName: 'AzTwitterSAR-Pipeline'
 
@@ -133,13 +133,25 @@ stages:
               package: '$(Pipeline.Workspace)/drop/**/*.zip'
               deploymentMethod: runFromPackage
 
+- stage: PreDeploy_prod
+  displayName: Pause the pipeline before infrastructure provisioning to prod, wait for approval
+  dependsOn: ['Build', 'Deploy_Test']
+  condition: succeeded()
+
+  jobs:
+  - deployment: Deploy
+    displayName: Deploy
+    environment: prod
+
 - stage: CreateCloudResources_Prod
   displayName: Create cloud resources in the prod-rg
-  dependsOn: ['Build', 'Deploy_Test']
+  dependsOn: ['Build', 'Deploy_Test', 'PreDeploy_prod']
 
   jobs:
   - job: Create
     displayName: Create
+    variables:
+    - group: 'AzTwitterSAR PROD Deployment pipeline variables'
     
     steps:
     - task: AzureResourceGroupDeployment@2
@@ -152,7 +164,7 @@ stages:
         templateLocation: 'Linked artifact'
         csmFile: '$(armTemplateLocation)/aztwittersar_template.json'
         csmParametersFile: '$(armTemplateLocation)/aztwittersar_parameters.json'
-        overrideParameters: -env prod -alertEmailAddress $(alertEmailAddress)
+        overrideParameters: -env prod -alertEmailAddress $(alertEmailAddress) -AZTWITTERSAR_AI_URI $(AZTWITTERSAR_AI_URI) -AZTWITTERSAR_SLACKHOOK $(AZTWITTERSAR_SLACKHOOK) -TwitterAccessToken $(TwitterAccessToken) -TwitterAccessTokenSecret $(TwitterAccessTokenSecret) -TwitterApiKey $(TwitterApiKey) -TwitterApiSecretKey $(TwitterApiSecretKey)
         deploymentMode: 'Complete'
         deploymentName: 'AzTwitterSAR-Pipeline'
 

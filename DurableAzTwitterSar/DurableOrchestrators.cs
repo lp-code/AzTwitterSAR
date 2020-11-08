@@ -162,10 +162,10 @@ namespace DurableAzTwitterSar
             // There is a bug in the durable function sleep/schedule routine so that it
             // restarts later than scheduled:
             // https://github.com/Azure/azure-functions-durable-extension/issues/1395
-            int targetSecondsBetweenRuns = 45;  // This results in ca. one minute.
+            int targetSecondsBetweenRuns = 50;  // This results in ca. one minute.
             int hr = currentTime.ToLocalTime().Hour;
-            if (hr >= 1 && hr <= 6)
-                targetSecondsBetweenRuns = 180;
+            if (hr >= 23 && hr < 5)  // hr is still UTC! From 1 to 7 CEST.
+                targetSecondsBetweenRuns = 150;
             const int minimumSecondsBetweenRuns = 30;
 
             bool envVarSet = Int32.TryParse(Environment.GetEnvironmentVariable("AZTWITTERSAR_ACTIVE"), out int envVarValue);
