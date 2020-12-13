@@ -9,7 +9,7 @@ trigger:
 variables:
   # Build configuration setting
   - name: buildConfiguration
-    value: 'Debug'
+    value: 'Release'
 
   # Azure Resource Manager connection created during pipeline creation
   - name: azureSubscription
