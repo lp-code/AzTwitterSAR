@@ -21,7 +21,7 @@ namespace DurableAzTwitterSar
                     MaxDelay = TimeSpan.FromSeconds(16),
                     MaxRetries = 5,
                     Mode = RetryMode.Exponential
-                    }
+                }
             };
             client = new SecretClient(new Uri(kvUri), new DefaultAzureCredential(), options);
         }

@@ -43,11 +43,21 @@ namespace DurableAzTwitterSar
             //       tweets from the one targeted to the current one.
             SearchTweetsParameters searchParameter = new SearchTweetsParameters($"from:{monitoredTwitterAccount}")
             {
-                MaximumNumberOfResults = 10,
+                MaximumNumberOfResults = 15,
                 SinceId = long.Parse(lastTweetId)
             };
 
-            IEnumerable<ITweet> tweets = await SearchAsync.SearchTweets(searchParameter);
+            IEnumerable<ITweet> tweets = null;
+            try
+            {
+                tweets = await SearchAsync.SearchTweets(searchParameter);
+            }
+            catch (Exception e)
+            {
+                // Inserted try-catch after a seemingly intermittent exception that lead to
+                // the service stopping completely, 20201213, ca. 7 am.
+                log.LogWarning($"A_GetTweets: SearchTweets failed with exception: {e.Message}");
+            }
             if (tweets is null)
             {
                 log.LogWarning($"A_GetTweets: Twitter connection failure. Return no tweets and retry in next cycle.");
