@@ -30,9 +30,21 @@ namespace DurableAzTwitterSar
             string accessTokenSecret = await kva.GetSecretAsync("TwitterAccessTokenSecret");
 
             string monitoredTwitterAccount = Environment.GetEnvironmentVariable("MonitoredTwitterAccount");
+            List<TweetProcessingData> tpds = new List<TweetProcessingData>(); // return value, empty list if Twitter connection failure
 
             var userCredentials = Auth.SetUserCredentials(apiKey, apiSecretKey, accessToken, accessTokenSecret);
-            var authenticatedUser = User.GetAuthenticatedUser(userCredentials);
+            try
+            {
+                // This variable is not used later, but seems to leave an id for the library.
+                var authenticatedUser = User.GetAuthenticatedUser(userCredentials);
+            }
+            catch (AggregateException ae)
+            {
+                // Inserted try-catch after a seemingly intermittent exception that lead to
+                // the service stopping completely, 20210102, ca. 11 am.
+                log.LogWarning($"A_GetTweets: User authentication failure: {ae.Message}. Return no tweets and retry in next cycle.");
+                return tpds;
+            }
 
             // Note: The following does NOT get MaximumNumberOfResults tweets
             //       from after lastTweetId!!! Rather it gets the most recent
@@ -61,11 +73,10 @@ namespace DurableAzTwitterSar
             if (tweets is null)
             {
                 log.LogWarning($"A_GetTweets: Twitter connection failure. Return no tweets and retry in next cycle.");
-                tweets = new List<ITweet>();
+                return tpds;
             }
             // Since the further processing can scramble the order again, we don't need to sort here.
 
-            List<TweetProcessingData> tpds = new List<TweetProcessingData>();
             foreach (var tweet in tweets)
             {
                 // Copy the data that we need over to a serializable struct.
