@@ -144,9 +144,18 @@ namespace DurableAzTwitterSar
                 Uri mlFuncUri = new Uri(mlUriString);
 
                 log.LogInformation($"Calling ML-inference.");
-                HttpResponseMessage httpResponseMsg = await httpClient.PostAsync(mlFuncUri, httpContent);
+                HttpResponseMessage httpResponseMsg = null;
+                try
+                {
+                    httpResponseMsg = await httpClient.PostAsync(mlFuncUri, httpContent);
+                }
+                catch (Exception e)
+                {
+                    log.LogError($"Getting ML score failed: {e.Message}");
+                }
 
-                if (httpResponseMsg.StatusCode == HttpStatusCode.OK
+                if (httpResponseMsg != null
+                    && httpResponseMsg.StatusCode == HttpStatusCode.OK
                     && httpResponseMsg.Content != null)
                 {
                     var responseContent = await httpResponseMsg.Content.ReadAsStringAsync();
