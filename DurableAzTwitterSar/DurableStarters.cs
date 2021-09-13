@@ -25,7 +25,10 @@ namespace DurableAzTwitterSar
 
             if (lastTweetId == null)
             {
-                return req.CreateResponse(HttpStatusCode.BadRequest, "Please pass lastTweetId in the query string.");
+                return new HttpResponseMessage(HttpStatusCode.BadRequest)
+                {
+                    Content = new StringContent("Please pass lastTweetId in the query string."),
+                };
             }
 
             log.LogDebug($"Starting orchestration for lastTweetId: {lastTweetId}");
@@ -54,7 +57,10 @@ namespace DurableAzTwitterSar
                 string lastTweetId = req.RequestUri.ParseQueryString()["lastTweetId"];
                 if (lastTweetId == null)
                 {
-                    return req.CreateResponse(HttpStatusCode.BadRequest, "Please pass lastTweetId in the query string.");
+                    return new HttpResponseMessage(HttpStatusCode.BadRequest)
+                    {
+                        Content = new StringContent("Please pass lastTweetId in the query string."),
+                    };
                 }
                 
                 await starter.StartNewAsync(functionName, instanceId, lastTweetId);
