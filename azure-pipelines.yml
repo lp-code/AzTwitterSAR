@@ -21,7 +21,7 @@ variables:
 
   # Agent VM image name
   - name: vmImageName
-    value: vs2017-win2016
+    value: windows-2022
 
   # Working Directory
   - name: workingDirectory
@@ -87,6 +87,8 @@ stages:
   jobs:
   - job: Create
     displayName: Create
+    pool:
+      vmImage: ubuntu-latest
     variables:
     - group: 'AzTwitterSAR TEST Deployment pipeline variables'
     
@@ -142,6 +144,8 @@ stages:
   - deployment: Deploy
     displayName: Deploy
     environment: prod
+    pool:
+      vmImage: ubuntu-latest
 
 - stage: CreateCloudResources_Prod
   displayName: Create cloud resources in the prod-rg
@@ -150,6 +154,8 @@ stages:
   jobs:
   - job: Create
     displayName: Create
+    pool:
+      vmImage: ubuntu-latest
     variables:
     - group: 'AzTwitterSAR PROD Deployment pipeline variables'
     
