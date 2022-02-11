@@ -87,6 +87,8 @@ stages:
   jobs:
   - job: Create
     displayName: Create
+    pool:
+      vmImage: ubuntu-latest
     variables:
     - group: 'AzTwitterSAR TEST Deployment pipeline variables'
     
@@ -150,6 +152,8 @@ stages:
   jobs:
   - job: Create
     displayName: Create
+    pool:
+      vmImage: ubuntu-latest
     variables:
     - group: 'AzTwitterSAR PROD Deployment pipeline variables'
     
