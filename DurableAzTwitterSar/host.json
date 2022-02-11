@@ -11,10 +11,10 @@
       }
     },
     "logLevel": {
-      "default": "Information",
+      "default": "Warning",
       "Host.Results": "Error",
       "Function": "Error",
-      "Host.Aggregator": "Information"
+      "Host.Aggregator": "Warning"
     }
   }
 }
