@@ -144,6 +144,8 @@ stages:
   - deployment: Deploy
     displayName: Deploy
     environment: prod
+    pool:
+      vmImage: ubuntu-latest
 
 - stage: CreateCloudResources_Prod
   displayName: Create cloud resources in the prod-rg
