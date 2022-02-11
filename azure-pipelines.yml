@@ -21,7 +21,7 @@ variables:
 
   # Agent VM image name
   - name: vmImageName
-    value: vs2017-win2016
+    value: windows-2022
 
   # Working Directory
   - name: workingDirectory
